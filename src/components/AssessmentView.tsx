@@ -22,7 +22,6 @@ interface AssessmentViewProps {
   userQuizAnswers: { [qId: string]: string };
   quizSubmitted: boolean;
   isGeneratingTest: boolean;
-  quizGenError: string | null;
   currentQuiz: Assessment | null;
   setCurrentQuiz: (quiz: Assessment | null) => void;
   quizScoreCard: AssessmentResult | null;
@@ -43,7 +42,6 @@ export default function AssessmentView({
   userQuizAnswers,
   quizSubmitted,
   isGeneratingTest,
-  quizGenError,
   currentQuiz,
   setCurrentQuiz,
   quizScoreCard,
@@ -107,13 +105,6 @@ export default function AssessmentView({
       {!currentQuiz && !isGeneratingTest && !quizScoreCard && (
         <div className="flex-1 max-w-2xl mx-auto w-full border border-slate-200 bg-white rounded-3xl p-5 md:p-6 shadow-xs flex flex-col gap-6 no-print">
           
-          {/* Error banner */}
-          {quizGenError && (
-            <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-xs font-medium">
-              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-red-500" />
-              <span>{quizGenError}</span>
-            </div>
-          )}
           {/* Select topic */}
           <div>
             <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
@@ -253,7 +244,7 @@ export default function AssessmentView({
           </div>
 
           {/* Interactive virtual paper page */}
-          <div id="worksheet-print-area" className="bg-white border border-slate-200 rounded-2xl max-w-3xl mx-auto w-full p-4 md:p-6 shadow-sm text-slate-900 font-serif relative overflow-visible">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-4xl mx-auto w-full p-8 md:p-12 shadow-sm text-slate-900 font-serif relative overflow-hidden">
             
             {/* School Title Header bar */}
             <div className="text-center pb-6 border-b-2 border-slate-900">
@@ -268,7 +259,7 @@ export default function AssessmentView({
             </div>
 
             {/* Student metadata fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-4 font-sans text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 my-8 font-sans text-xs">
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-slate-800 uppercase shrink-0">Student Name:</span>
                 <div className="flex-1 border-b border-dashed border-slate-400 h-5"></div>
@@ -284,7 +275,7 @@ export default function AssessmentView({
             </div>
 
             {/* Instruction block */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 font-sans text-[11px] leading-relaxed text-slate-600 mb-4">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 font-sans text-[11px] leading-relaxed text-slate-600 mb-8">
               <p className="font-bold text-slate-800">General Directions for Student:</p>
               <ul className="list-disc list-inside mt-1 space-y-0.5">
                 <li>Read each question carefully before attempting to solve.</li>
@@ -295,9 +286,9 @@ export default function AssessmentView({
             </div>
 
             {/* Questions block */}
-            <div className="space-y-2 @media-print:space-y-1">
+            <div className="space-y-10">
               {currentQuiz.questions.map((q, idx) => (
-                <div key={q.id} className="space-y-2 pb-4 border-b border-slate-100 last:border-0 last:pb-0 break-inside-avoid">
+                <div key={q.id} className="space-y-3 pb-8 border-b border-slate-100 last:border-0 last:pb-0 break-inside-avoid">
                   
                   {/* Question header */}
                   <div className="flex items-start justify-between gap-3">
@@ -338,7 +329,7 @@ export default function AssessmentView({
                   <div className="pl-10 pt-2 font-sans">
                     <div className="border border-dashed border-slate-300 rounded-xl p-3 bg-slate-50/20 text-[9px] text-slate-400 tracking-wider uppercase font-black">
                       <span>✂️ scratchpad area (show calculation work)</span>
-                      <div className="h-10"></div>
+                      <div className="h-20"></div>
                     </div>
                   </div>
 

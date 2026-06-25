@@ -4,15 +4,14 @@ import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Load environment variables — .env.local takes priority over .env
-dotenv.config({ path: ".env.local" });
+// Load environment variables
 dotenv.config();
 
 // Ensure ESM-safe dirname
 const __dirname = path.resolve();
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = 3000;
 
 // Set high limits for handling base64 images from assessment scans
 app.use(express.json({ limit: "15mb" }));
@@ -146,7 +145,7 @@ QUESTION SEQUENCE COMPLEXITY GUIDELINE:
 ${complexityIncreaseInstructions}`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite",
+      model: "gemini-3.5-flash",
       contents: promptText,
       config: {
         responseMimeType: "application/json",
@@ -241,7 +240,7 @@ Store and return all evaluations in the requested JSON structure. Custom user la
     };
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite",
+      model: "gemini-3.5-flash",
       contents: [imagePart, textPart],
       config: {
         responseMimeType: "application/json",

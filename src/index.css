@@ -1,3 +1,184 @@
+/* =====================================================================
+   PRINT STYLES — Letter size (8.5" × 11"), 0.45" margins
+   Uses visibility isolation so only the worksheet div prints.
+   ===================================================================== */
+@page {
+  size: letter;
+  margin: 0.45in;
+}
+
+@media print {
+  /* Preserve colors / backgrounds when printing */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Allow multi-page flow; prevent clipping by scroll/flex containers */
+  html,
+  body,
+  #root,
+  #root > div,
+  #root > div > div,
+  .flex-1,
+  .overflow-y-auto {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  #worksheet-print-area {
+    width: 100% !important;
+    max-width: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* ── TYPOGRAPHY — make everything smaller for density ─────────────── */
+  #worksheet-print-area h2 {
+    font-size: 13pt !important;
+    line-height: 1.2 !important;
+    margin: 0 0 3pt !important;
+    padding: 0 !important;
+  }
+
+  /* Topic / ID subtitle below header */
+  #worksheet-print-area .text-xs.font-sans.text-slate-500 {
+    font-size: 7.5pt !important;
+    margin-top: 2pt !important;
+  }
+
+  /* Header bottom border section — tighter */
+  #worksheet-print-area .border-b-2.border-slate-900 {
+    padding-bottom: 5pt !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* ── STUDENT METADATA ROW ─────────────────────────────────────────── */
+  #worksheet-print-area .grid.grid-cols-1.sm\:grid-cols-3 {
+    gap: 4pt !important;
+    margin-top: 5pt !important;
+    margin-bottom: 5pt !important;
+  }
+
+  #worksheet-print-area .grid.grid-cols-1.sm\:grid-cols-3 span,
+  #worksheet-print-area .grid.grid-cols-1.sm\:grid-cols-3 .font-black {
+    font-size: 8pt !important;
+  }
+
+  /* ── INSTRUCTIONS BLOCK ───────────────────────────────────────────── */
+  #worksheet-print-area .bg-slate-50.border.border-slate-200.rounded-xl {
+    padding: 5pt !important;
+    margin-bottom: 6pt !important;
+  }
+
+  #worksheet-print-area .bg-slate-50.border.border-slate-200.rounded-xl p,
+  #worksheet-print-area .bg-slate-50.border.border-slate-200.rounded-xl li {
+    font-size: 8pt !important;
+    line-height: 1.3 !important;
+    margin: 0 !important;
+  }
+
+  #worksheet-print-area .bg-slate-50.border.border-slate-200.rounded-xl ul {
+    margin-top: 2pt !important;
+    padding-left: 12pt !important;
+  }
+
+  #worksheet-print-area .bg-slate-50.border.border-slate-200.rounded-xl li {
+    margin-bottom: 1.5pt !important;
+  }
+
+  /* ── QUESTION ITEMS ───────────────────────────────────────────────── */
+  /* Each question wrapper */
+  #worksheet-print-area .break-inside-avoid {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Question number badge */
+  #worksheet-print-area .w-7.h-7 {
+    width: 16pt !important;
+    height: 16pt !important;
+    font-size: 8pt !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Question text */
+  #worksheet-print-area .text-sm.md\:text-base {
+    font-size: 9.5pt !important;
+    line-height: 1.3 !important;
+  }
+
+  /* MC options grid */
+  #worksheet-print-area .grid.grid-cols-1.sm\:grid-cols-2 {
+    gap: 1.5pt !important;
+  }
+
+  #worksheet-print-area .grid.grid-cols-1.sm\:grid-cols-2 span,
+  #worksheet-print-area .grid.grid-cols-1.sm\:grid-cols-2 > div {
+    font-size: 8.5pt !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Short-answer input box */
+  #worksheet-print-area .w-48 {
+    width: 90pt !important;
+    height: 16pt !important;
+    padding: 1pt !important;
+  }
+
+  /* Scratchpad box */
+  #worksheet-print-area .border.border-dashed.border-slate-300 {
+    padding: 3pt !important;
+    margin-top: 2pt !important;
+    font-size: 7pt !important;
+  }
+
+  /* The inner height spacer inside the scratchpad */
+  #worksheet-print-area .border.border-dashed.border-slate-300 .h-10,
+  #worksheet-print-area .border.border-dashed.border-slate-300 .h-20 {
+    height: 22pt !important;
+  }
+
+  /* ── ANSWER KEY (on its own printed page) ─────────────────────────── */
+  #worksheet-print-area [style*="pageBreakBefore"],
+  #worksheet-print-area [style*="page-break-before"] {
+    page-break-before: always !important;
+    break-before: page !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  #worksheet-print-area .space-y-6 > div {
+    padding: 5pt !important;
+    font-size: 8.5pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 5pt !important;
+  }
+
+  #worksheet-print-area .space-y-6 p {
+    font-size: 8.5pt !important;
+    line-height: 1.3 !important;
+    margin-bottom: 2pt !important;
+  }
+
+  #worksheet-print-area .text-slate-600.leading-relaxed {
+    font-size: 8pt !important;
+    line-height: 1.25 !important;
+  }
+}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 

@@ -376,6 +376,7 @@ export default function App() {
      QUIZ GENERATION AREA
      ========================================== */
   const [isGeneratingTest, setIsGeneratingTest] = useState(false);
+  const [quizGenError, setQuizGenError] = useState<string | null>(null);
   const [currentQuiz, setCurrentQuiz] = useState<Assessment | null>(null);
   const [selectedQuizTopic, setSelectedQuizTopic] = useState<string>("ratios");
   const [userQuizAnswers, setUserQuizAnswers] = useState<{ [qId: string]: string }>({});
@@ -385,6 +386,7 @@ export default function App() {
 
   const startTopicQuiz = async (topicId: string, topicName: string, numQuestions: number = 10) => {
     setIsGeneratingTest(true);
+    setQuizGenError(null);
     setQuizSubmitted(false);
     setUserQuizAnswers({});
     setCurrentQuiz(null);
@@ -422,16 +424,12 @@ export default function App() {
       setCurrentQuiz(generatedTest);
     } catch (e: any) {
       console.error("Quiz gen error:", e);
-      // Fallback
-      const localFallback = INSTANT_TUTOR_QUESTIONS.find(q => q.topicId === topicId) || INSTANT_TUTOR_QUESTIONS[0];
-      setCurrentQuiz({
-        id: `test_local_${Date.now()}`,
-        topicId: topicId,
-        topicName: topicName,
-        title: localFallback.title,
-        questions: localFallback.questions as Question[],
-        skillsTested: localFallback.skillsTested
-      });
+      const msg = e?.message || "Failed to generate quiz.";
+      setQuizGenError(
+        msg.includes("GEMINI_API_KEY")
+          ? "GEMINI_API_KEY is not configured. Please add it to your .env.local file and restart the server."
+          : `Could not generate quiz: ${msg}`
+      );
     } finally {
       setIsGeneratingTest(false);
     }
@@ -586,6 +584,7 @@ export default function App() {
             userQuizAnswers={userQuizAnswers}
             quizSubmitted={quizSubmitted}
             isGeneratingTest={isGeneratingTest}
+            quizGenError={quizGenError}
             currentQuiz={currentQuiz}
             setCurrentQuiz={setCurrentQuiz}
             quizScoreCard={quizScoreCard}

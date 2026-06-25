@@ -1,0 +1,6 @@
+{
+  "name": "Math Assessment Center",
+  "description": "An AI-powered math tutor that checks 6th-grade math worksheets, grades handwritten assessments, generates interactive tests, and monitors skill mastery.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

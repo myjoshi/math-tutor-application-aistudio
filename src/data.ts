@@ -132,7 +132,7 @@ export const AVATAR_OPTIONS = [
 ];
 
 export const DEFAULT_PROFILE: StudentProfile = {
-  name: "Alex",
+  name: "Nitya",
   grade: "6th Grade",
   avatarUrl: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=150&q=80",
   points: 120,

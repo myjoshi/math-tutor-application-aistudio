@@ -12,7 +12,7 @@ dotenv.config();
 const __dirname = path.resolve();
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Set high limits for handling base64 images from assessment scans
 app.use(express.json({ limit: "15mb" }));

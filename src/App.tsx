@@ -47,6 +47,13 @@ import {
 } from "./lib/firebase";
 
 export default function App() {
+  const getNormalizedScanTotals = (scan: ScannedPaperResult) => {
+    const totalProblems = scan.problems?.length ?? scan.totalProblems ?? 0;
+    const correctCount = scan.problems?.filter((problem) => problem.isCorrect).length ?? scan.correctCount ?? 0;
+    const score = totalProblems > 0 ? Math.round((correctCount / totalProblems) * 100) : null;
+    return { totalProblems, correctCount, score };
+  };
+
   // Navigation tabs: "dashboard" | "scanner" | "quiz" | "profile"
   const [activeTab, setActiveTab] = useState<"dashboard" | "scanner" | "quiz" | "profile">("dashboard");
 
@@ -168,11 +175,11 @@ export default function App() {
   /* ==========================================
      INTEGRATIVE STATS CALCULATION
      ========================================== */
-  const totalAttemptedQuestions = quizResults.reduce((acc, q) => acc + q.totalQuestions, 0) + 
-    scans.reduce((acc, s) => acc + s.totalProblems, 0);
+  const totalAttemptedQuestions = quizResults.reduce((acc, q) => acc + q.totalQuestions, 0) +
+    scans.reduce((acc, s) => acc + getNormalizedScanTotals(s).totalProblems, 0);
 
-  const totalCorrectQuestions = quizResults.reduce((acc, q) => acc + q.correctCount, 0) + 
-    scans.reduce((acc, s) => acc + s.correctCount, 0);
+  const totalCorrectQuestions = quizResults.reduce((acc, q) => acc + q.correctCount, 0) +
+    scans.reduce((acc, s) => acc + getNormalizedScanTotals(s).correctCount, 0);
 
   const overallAccuracy = totalAttemptedQuestions > 0 
     ? Math.round((totalCorrectQuestions / totalAttemptedQuestions) * 100) 
@@ -183,7 +190,7 @@ export default function App() {
      ========================================== */
   const [useCamera, setUseCamera] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
-  const [scanImageBase64, setScanImageBase64] = useState<string | null>(null);
+  const [scanImagesBase64, setScanImagesBase64] = useState<string[]>([]);
   const [customScanLabel, setCustomScanLabel] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -238,62 +245,110 @@ export default function App() {
       if (ctx) {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL("image/jpeg");
-        setScanImageBase64(dataUrl);
-        setUseCamera(false);
-        stopCamera();
+        setScanImagesBase64(prev => [...prev, dataUrl]);
       }
     }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === "string") {
-          setScanImageBase64(reader.result);
+          setScanImagesBase64(prev => [...prev, reader.result as string]);
         }
       };
       reader.readAsDataURL(file);
     }
+
+    e.target.value = "";
   };
 
   const triggerCheckPaper = async () => {
-    if (!scanImageBase64) return;
+    if (scanImagesBase64.length === 0) return;
     setIsScanning(true);
     setScanError(null);
 
-    const base64Data = scanImageBase64.split(",")[1];
-    const mimeType = scanImageBase64.split(";")[0].split(":")[1] || "image/jpeg";
-
     try {
-      const response = await fetch("/api/check-paper", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: base64Data,
-          mimeType: mimeType,
-          customLabel: customScanLabel || "6th Grade Homework Page"
-        })
+      const rawPageResults = await Promise.all(scanImagesBase64.map(async (imageData, index) => {
+        const base64Data = imageData.split(",")[1];
+        const mimeType = imageData.split(";")[0].split(":")[1] || "image/jpeg";
+
+        const response = await fetch("/api/check-paper", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image: base64Data,
+            mimeType: mimeType,
+            customLabel: customScanLabel || `6th Grade Homework Page ${index + 1}`
+          })
+        });
+
+        if (!response.ok) {
+          const errJson = await response.json();
+          throw new Error(errJson.error || "Failed to analyze homework.");
+        }
+
+        const pageResult: ScannedPaperResult = await response.json();
+        pageResult.imageUrl = imageData;
+        return pageResult;
+      }));
+
+      const pageResults = rawPageResults.map((result) => {
+        const normalized = getNormalizedScanTotals(result);
+        return {
+          ...result,
+          totalProblems: normalized.totalProblems,
+          correctCount: normalized.correctCount,
+          score: normalized.score
+        };
       });
 
-      if (!response.ok) {
-        const errJson = await response.json();
-        throw new Error(errJson.error || "Failed to analyze homework.");
-      }
+      const combinedProblems = pageResults.flatMap((result, pageIndex) =>
+        result.problems.map((problem, problemIndex) => ({
+          ...problem,
+          problemNumber: `P${pageIndex + 1}-${problem.problemNumber || problemIndex + 1}`
+        }))
+      );
 
-      const verifiedResult: ScannedPaperResult = await response.json();
-      verifiedResult.id = `scan_${Date.now()}`;
-      verifiedResult.date = new Date().toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-      verifiedResult.imageUrl = scanImageBase64;
+      const totalProblems = pageResults.reduce((acc, result) => acc + result.totalProblems, 0);
+      const correctCount = pageResults.reduce((acc, result) => acc + result.correctCount, 0);
+      const mergedConcepts = Array.from(
+        new Set(pageResults.flatMap(result => result.keyConceptToImprove || []))
+      ).slice(0, 6);
+      const score = totalProblems > 0 ? Math.round((correctCount / totalProblems) * 100) : null;
+
+      const verifiedResult: ScannedPaperResult = {
+        ...pageResults[0],
+        id: `scan_${Date.now()}`,
+        date: new Date().toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        }),
+        title: customScanLabel || (pageResults.length > 1
+          ? `Worksheet Scan (${pageResults.length} pages)`
+          : pageResults[0].title),
+        score,
+        totalProblems,
+        correctCount,
+        imageUrl: scanImagesBase64[0],
+        keyConceptToImprove: mergedConcepts,
+        generalFeedback: pageResults.length > 1
+          ? `Multi-page scan complete (${pageResults.length} pages). ${correctCount}/${totalProblems} answers were correct.`
+          : pageResults[0].generalFeedback,
+        suggestedAction: pageResults[0].suggestedAction,
+        problems: combinedProblems
+      };
 
       setCurrentScanResult(verifiedResult);
+      setSelectedScanHistory(null);
       setScans(prev => [verifiedResult, ...prev]);
       saveScanResult(verifiedResult);
 
@@ -365,11 +420,12 @@ export default function App() {
   };
 
   const handleClearCurrentScan = () => {
-    setScanImageBase64(null);
+    setScanImagesBase64([]);
     setCurrentScanResult(null);
     setSelectedScanHistory(null);
     setCustomScanLabel("");
     setScanError(null);
+    setUseCamera(false);
   };
 
   /* ==========================================
@@ -546,10 +602,6 @@ export default function App() {
             scans={scans}
             quizResults={quizResults}
             setActiveTab={setActiveTab}
-            setSelectedScanHistory={(scan) => {
-              setSelectedScanHistory(scan);
-              setCurrentScanResult(null);
-            }}
             setSelectedQuizTopic={setSelectedQuizTopic}
             overallAccuracy={overallAccuracy}
           />
@@ -559,8 +611,16 @@ export default function App() {
           <ScannerHubView
             useCamera={useCamera}
             setUseCamera={setUseCamera}
-            scanImageBase64={scanImageBase64}
-            setScanImageBase64={setScanImageBase64}
+            scans={scans}
+            scanImagesBase64={scanImagesBase64}
+            setSelectedScanHistory={(scan) => {
+              setSelectedScanHistory(scan);
+              setCurrentScanResult(null);
+            }}
+            removeScanImageAt={(index) => {
+              setScanImagesBase64(prev => prev.filter((_, i) => i !== index));
+            }}
+            clearScanImages={() => setScanImagesBase64([])}
             customScanLabel={customScanLabel}
             setCustomScanLabel={setCustomScanLabel}
             isScanning={isScanning}

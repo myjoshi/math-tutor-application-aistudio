@@ -7,7 +7,6 @@ interface DashboardViewProps {
   scans: ScannedPaperResult[];
   quizResults: AssessmentResult[];
   setActiveTab: (tab: "dashboard" | "scanner" | "quiz" | "profile") => void;
-  setSelectedScanHistory: (scan: ScannedPaperResult | null) => void;
   setSelectedQuizTopic: (topicId: string) => void;
   overallAccuracy: number;
 }
@@ -17,7 +16,6 @@ export default function DashboardView({
   scans,
   quizResults,
   setActiveTab,
-  setSelectedScanHistory,
   setSelectedQuizTopic,
   overallAccuracy
 }: DashboardViewProps) {
@@ -127,22 +125,11 @@ export default function DashboardView({
             </p>
             
             {scans.length > 0 ? (
-              <div className="mt-3.5 space-y-1.5">
-                {scans.slice(0, 2).map((scan) => (
-                  <div
-                    key={scan.id}
-                    onClick={() => {
-                      setSelectedScanHistory(scan);
-                      setActiveTab("scanner");
-                    }}
-                    className="flex justify-between items-center text-xs text-slate-600 bg-slate-50 hover:bg-slate-100/80 p-2 rounded-xl border border-slate-100 cursor-pointer font-medium truncate duration-100"
-                  >
-                    <span className="truncate max-w-[140px] font-bold text-slate-700">{scan.title}</span>
-                    <span className="text-[10px] bg-white border border-slate-100 px-1.5 py-0.5 rounded font-bold text-indigo-600 ml-2">
-                      {scan.correctCount}/{scan.totalProblems}
-                    </span>
-                  </div>
-                ))}
+              <div className="mt-4 py-4 bg-slate-50 rounded-2xl text-center border border-slate-200">
+                <p className="text-[11px] text-slate-600 font-semibold">
+                  {scans.length} scan result{scans.length === 1 ? "" : "s"} saved
+                </p>
+                <p className="text-[10px] text-slate-400 mt-1">Open Scan Lab to review full history.</p>
               </div>
             ) : (
               <div className="mt-4 py-4 bg-slate-50 rounded-2xl text-center border border-dashed border-slate-200">
@@ -214,47 +201,6 @@ export default function DashboardView({
         ) : (
           <div className="flex flex-col gap-4">
             
-            {/* Scans list */}
-            {scans.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                  Handwritten Homework Evaluations ({scans.length})
-                </span>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {scans.map((scan) => (
-                    <div
-                      key={scan.id}
-                      onClick={() => {
-                        setSelectedScanHistory(scan);
-                        setActiveTab("scanner");
-                      }}
-                      className="p-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-200/60 transition rounded-2xl cursor-pointer flex justify-between items-start duration-100 group"
-                    >
-                      <div className="max-w-[75%] flex flex-col gap-1">
-                        <span className="text-[9px] text-indigo-700 bg-indigo-50 font-bold px-1.5 py-0.5 rounded-lg w-fit">
-                          Worksheet Scan
-                        </span>
-                        <h4 className="text-xs font-bold text-slate-800 leading-tight group-hover:text-indigo-600 truncate">
-                          {scan.title}
-                        </h4>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{scan.date}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="text-right flex flex-col items-end gap-1.5">
-                        <span className="text-xs font-extrabold text-indigo-700 bg-white border border-indigo-100 px-2 py-1 rounded-xl shadow-xs shrink-0">
-                          {scan.correctCount}/{scan.totalProblems} OK
-                        </span>
-                        <span className="text-[9px] text-slate-400 font-semibold group-hover:underline">Review steps ➜</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Quizzes list */}
             {quizResults.length > 0 && (
               <div className="flex flex-col gap-2 mt-2">

@@ -1,12 +1,15 @@
 import React from "react";
 import { ScannedPaperResult } from "../types";
-import { Camera, Upload, XCircle, CheckCircle, Sparkles, RefreshCw, AlertCircle, FileText, HelpCircle } from "lucide-react";
+import { Camera, Upload, XCircle, CheckCircle, Sparkles, RefreshCw, AlertCircle, FileText, HelpCircle, ArrowLeft, Clock } from "lucide-react";
 
 interface ScannerHubProps {
+  scans: ScannedPaperResult[];
   useCamera: boolean;
   setUseCamera: (v: boolean) => void;
-  scanImageBase64: string | null;
-  setScanImageBase64: (data: string | null) => void;
+  scanImagesBase64: string[];
+  setSelectedScanHistory: (scan: ScannedPaperResult | null) => void;
+  removeScanImageAt: (index: number) => void;
+  clearScanImages: () => void;
   customScanLabel: string;
   setCustomScanLabel: (txt: string) => void;
   isScanning: boolean;
@@ -22,10 +25,13 @@ interface ScannerHubProps {
 }
 
 export default function ScannerHubView({
+  scans,
   useCamera,
   setUseCamera,
-  scanImageBase64,
-  setScanImageBase64,
+  scanImagesBase64,
+  setSelectedScanHistory,
+  removeScanImageAt,
+  clearScanImages,
   customScanLabel,
   setCustomScanLabel,
   isScanning,
@@ -39,8 +45,14 @@ export default function ScannerHubView({
   handleFileUpload,
   setActiveTab
 }: ScannerHubProps) {
+  const getScanTotals = (scan: ScannedPaperResult) => {
+    const totalProblems = scan.problems?.length ?? scan.totalProblems ?? 0;
+    const correctCount = scan.problems?.filter((problem) => problem.isCorrect).length ?? scan.correctCount ?? 0;
+    return { totalProblems, correctCount };
+  };
   
   const activeReport = currentScanResult || selectedScanHistory;
+  const activeReportTotals = activeReport ? getScanTotals(activeReport) : null;
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 md:p-6 bg-slate-50 flex flex-col gap-6 pb-24 lg:pb-6">
@@ -59,15 +71,25 @@ export default function ScannerHubView({
           </p>
         </div>
 
-        {/* Clear & Upload another paper trigger */}
-        {activeReport && (
+        <div className="flex w-full md:w-auto gap-2">
           <button
-            onClick={handleClearCurrentScan}
+            onClick={() => setActiveTab("dashboard")}
             className="w-full md:w-auto px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition active:scale-95 duration-100 flex items-center justify-center gap-1 cursor-pointer shadow-xs"
           >
-            ← Upload Another Paper
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Home
           </button>
-        )}
+
+          {/* Clear & Upload another paper trigger */}
+          {activeReport && (
+            <button
+              onClick={handleClearCurrentScan}
+              className="w-full md:w-auto px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition active:scale-95 duration-100 flex items-center justify-center gap-1 cursor-pointer shadow-xs"
+            >
+              Upload Another Paper
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Alarm box */}
@@ -125,19 +147,34 @@ export default function ScannerHubView({
                   
                   {/* File Upload drag-and-drop container */}
                   <div className="border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50/80 transition rounded-3xl p-6 text-center flex flex-col items-center justify-center min-h-[220px] relative group overflow-hidden">
-                    {scanImageBase64 ? (
-                      <div className="relative max-w-full">
-                        <img
-                          src={scanImageBase64}
-                          alt="Math homework worksheet pre-scan"
-                          className="max-h-[180px] rounded-2xl object-contain border border-slate-200 shadow-sm block mx-auto bg-white"
-                        />
+                    {scanImagesBase64.length > 0 ? (
+                      <div className="w-full">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                          {scanImagesBase64.map((image, index) => (
+                            <div key={`${index}-${image.slice(0, 20)}`} className="relative">
+                              <img
+                                src={image}
+                                alt={`Worksheet page ${index + 1}`}
+                                className="h-24 w-full rounded-xl object-cover border border-slate-200 shadow-sm bg-white"
+                              />
+                              <span className="absolute bottom-1 left-1 bg-slate-900/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                Page {index + 1}
+                              </span>
+                              <button
+                                onClick={() => removeScanImageAt(index)}
+                                className="absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full p-1 shadow-md active:scale-110 transition duration-150"
+                                title="Remove page"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                         <button
-                          onClick={() => setScanImageBase64(null)}
-                          className="absolute -top-2.5 -right-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-full p-1.5 shadow-md active:scale-110 transition duration-150"
-                          title="Remove photo"
+                          onClick={clearScanImages}
+                          className="mt-3 text-[10px] font-bold text-rose-600 hover:text-rose-700"
                         >
-                          <XCircle className="w-4 h-4" />
+                          Clear all pages
                         </button>
                       </div>
                     ) : (
@@ -151,12 +188,13 @@ export default function ScannerHubView({
                             <input
                               type="file"
                               accept="image/*"
+                              multiple
                               onChange={handleFileUpload}
                               className="hidden"
                             />
                           </label>
                         </p>
-                        <p className="text-[10px] text-slate-400 mt-1 font-medium">Supports JPG, PNG, GIF up to 10MB</p>
+                        <p className="text-[10px] text-slate-400 mt-1 font-medium">Supports JPG, PNG, GIF up to 10MB (multi-page allowed)</p>
                       </div>
                     )}
                   </div>
@@ -167,7 +205,7 @@ export default function ScannerHubView({
                     className="w-full py-3 border border-slate-200 hover:border-indigo-300 rounded-2xl text-xs font-bold text-slate-700 hover:text-indigo-700 hover:bg-indigo-50/30 transition duration-150 flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                   >
                     <Camera className="w-4 h-4 text-slate-500" />
-                    Snap with Device Camera
+                    Capture Page with Camera
                   </button>
 
                 </div>
@@ -192,9 +230,9 @@ export default function ScannerHubView({
 
               <button
                 onClick={triggerCheckPaper}
-                disabled={!scanImageBase64 || isScanning}
+                disabled={scanImagesBase64.length === 0 || isScanning}
                 className={`w-full py-3.5 rounded-2xl text-xs font-bold tracking-wide shadow-md flex items-center justify-center gap-2 transition duration-200 active:scale-98 ${
-                  scanImageBase64 && !isScanning
+                  scanImagesBase64.length > 0 && !isScanning
                     ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100 cursor-pointer"
                     : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
                 }`}
@@ -207,7 +245,7 @@ export default function ScannerHubView({
                 ) : (
                   <>
                     <Sparkles className="w-4.5 h-4.5" />
-                    <span>Grades and Review Work Now</span>
+                    <span>Grade {scanImagesBase64.length > 1 ? `${scanImagesBase64.length} Pages` : "Worksheet"} Now</span>
                   </>
                 )}
               </button>
@@ -316,7 +354,7 @@ export default function ScannerHubView({
 
                 <div className="text-right">
                   <span className="text-lg font-black text-indigo-600 block leading-tight">
-                    {activeReport.correctCount}/{activeReport.totalProblems}
+                    {activeReportTotals?.correctCount ?? 0}/{activeReportTotals?.totalProblems ?? 0}
                   </span>
                   <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold">Correct Score</span>
                 </div>
@@ -450,6 +488,38 @@ export default function ScannerHubView({
 
           </div>
 
+        </div>
+      )}
+
+      {scans.length > 0 && (
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-slate-800">Scan History</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Visible on Scan page only.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {scans.map((scan) => (
+              <button
+                key={scan.id}
+                onClick={() => setSelectedScanHistory(scan)}
+                className="p-3.5 text-left bg-slate-50 hover:bg-slate-100 border border-slate-200/60 transition rounded-2xl flex justify-between items-start duration-100"
+              >
+                <div className="max-w-[74%] flex flex-col gap-1">
+                  <span className="text-[9px] text-indigo-700 bg-indigo-50 font-bold px-1.5 py-0.5 rounded-lg w-fit">
+                    Worksheet Scan
+                  </span>
+                  <h4 className="text-xs font-bold text-slate-800 leading-tight truncate">{scan.title}</h4>
+                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-1">
+                    <Clock className="w-3 h-3" />
+                    <span>{scan.date}</span>
+                  </div>
+                </div>
+                <span className="text-xs font-extrabold text-indigo-700 bg-white border border-indigo-100 px-2 py-1 rounded-xl shadow-xs shrink-0">
+                  {getScanTotals(scan).correctCount}/{getScanTotals(scan).totalProblems}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

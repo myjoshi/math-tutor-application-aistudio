@@ -36,6 +36,7 @@ import ProfileView from "./components/ProfileView";
 import DashboardView from "./components/DashboardView";
 import ScannerHubView from "./components/ScannerHubView";
 import AssessmentView from "./components/AssessmentView";
+import MobileCamera from "./components/MobileCamera";
 import {
   saveStudentProfile,
   loadStudentProfile,
@@ -189,7 +190,6 @@ export default function App() {
      SCANNER & HOMEWORK CHECKER STATE & LOGIC
      ========================================== */
   const [useCamera, setUseCamera] = useState(false);
-  const [cameraActive, setCameraActive] = useState(false);
   const [scanImagesBase64, setScanImagesBase64] = useState<string[]>([]);
   const [customScanLabel, setCustomScanLabel] = useState("");
   const [isScanning, setIsScanning] = useState(false);
@@ -197,57 +197,10 @@ export default function App() {
   const [currentScanResult, setCurrentScanResult] = useState<ScannedPaperResult | null>(null);
   const [selectedScanHistory, setSelectedScanHistory] = useState<ScannedPaperResult | null>(null);
 
-  // Audio/video stream refs
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  // Start back-end scanner API call
-  const startCamera = async () => {
-    try {
-      setScanError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        setCameraActive(true);
-      }
-    } catch (err: any) {
-      console.error(err);
-      setScanError("Could not access camera. Please check camera permissions in your browser system settings, or pick an image file directly.");
-      setUseCamera(false);
-    }
-  };
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    setCameraActive(false);
-  };
-
-  useEffect(() => {
-    if (useCamera) {
-      startCamera();
-    } else {
-      stopCamera();
-    }
-    return () => stopCamera();
-  }, [useCamera]);
-
-  const capturePhoto = () => {
-    if (videoRef.current) {
-      const canvas = document.createElement("canvas");
-      canvas.width = videoRef.current.videoWidth || 640;
-      canvas.height = videoRef.current.videoHeight || 480;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL("image/jpeg");
-        setScanImagesBase64(prev => [...prev, dataUrl]);
-      }
-    }
+  // Handle photo captured from mobile camera
+  const handleMobileCameraCapture = (photoBase64: string) => {
+    setScanImagesBase64(prev => [...prev, photoBase64]);
+    setUseCamera(false);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -255,8 +208,8 @@ export default function App() {
     if (!fileList || fileList.length === 0) return;
 
     for (let i = 0; i < fileList.length; i++) {
-      const file = fileList[i];
-      const reader = new FileReader();
+     const file = fileList[i];
+     const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === "string") {
           setScanImagesBase64(prev => [...prev, reader.result as string]);
@@ -529,6 +482,7 @@ export default function App() {
       totalQuestions: currentQuiz.questions.length,
       correctCount: correct,
       userAnswers: userQuizAnswers,
+      questions: currentQuiz.questions, // Store full questions for history/replay
       feedback: {
         generalRemark: percent === 100 
           ? "Outstanding! Absolutely perfect math answers." 
@@ -629,8 +583,6 @@ export default function App() {
             selectedScanHistory={selectedScanHistory}
             triggerCheckPaper={triggerCheckPaper}
             handleClearCurrentScan={handleClearCurrentScan}
-            videoRef={videoRef}
-            capturePhoto={capturePhoto}
             handleFileUpload={handleFileUpload}
             setActiveTab={setActiveTab}
           />
@@ -651,6 +603,7 @@ export default function App() {
             setQuizScoreCard={setQuizScoreCard}
             selectedQuizTopic={selectedQuizTopic}
             setSelectedQuizTopic={setSelectedQuizTopic}
+            quizResults={quizResults}
             startTopicQuiz={startTopicQuiz}
             selectQuizOption={selectQuizOption}
             setShortAnswer={setShortAnswer}
@@ -811,6 +764,14 @@ export default function App() {
             renderTabContent()
           )}
         </div>
+
+        {/* Mobile Camera Modal */}
+        {useCamera && (
+          <MobileCamera
+            onCapturePhoto={handleMobileCameraCapture}
+            onClose={() => setUseCamera(false)}
+          />
+        )}
 
         {/* Responsive Bottom Navigation Bar */}
         <div className="no-print">

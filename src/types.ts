@@ -43,6 +43,7 @@ export interface AssessmentResult {
   totalQuestions: number;
   correctCount: number;
   userAnswers: { [questionId: string]: string };
+  questions?: Question[]; // Full questions for review/replay
   feedback: {
     generalRemark: string;
     strengths: string[];

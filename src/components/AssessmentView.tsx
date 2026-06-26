@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { StudentProfile, Assessment, AssessmentResult, Question } from "../types";
+import WorksheetHistory from "./WorksheetHistory";
 import { 
   BookOpen, 
   CheckCircle, 
@@ -29,6 +30,7 @@ interface AssessmentViewProps {
   setQuizScoreCard: (card: AssessmentResult | null) => void;
   selectedQuizTopic: string;
   setSelectedQuizTopic: (topicId: string) => void;
+  quizResults: AssessmentResult[];
   startTopicQuiz: (topicId: string, topicName: string, numQuestions?: number) => Promise<void>;
   selectQuizOption: (qId: string, option: string) => void;
   setShortAnswer: (qId: string, answer: string) => void;
@@ -50,6 +52,7 @@ export default function AssessmentView({
   setQuizScoreCard,
   selectedQuizTopic,
   setSelectedQuizTopic,
+  quizResults,
   startTopicQuiz,
   selectQuizOption,
   setShortAnswer,
@@ -187,6 +190,18 @@ export default function AssessmentView({
             <Sparkles className="w-4 h-4 text-indigo-200" />
             <span>Generate Printable Worksheet</span>
           </button>
+        </div>
+      )}
+
+      {/* WORKSHEET HISTORY SECTION */}
+      {!currentQuiz && !isGeneratingTest && !quizScoreCard && quizResults.length > 0 && (
+        <div className="max-w-4xl mx-auto w-full no-print">
+          <WorksheetHistory 
+            quizResults={quizResults}
+            onReviewWorksheet={(result) => {
+              setQuizScoreCard(result);
+            }}
+          />
         </div>
       )}
 

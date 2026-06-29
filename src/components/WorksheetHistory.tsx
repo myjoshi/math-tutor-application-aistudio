@@ -30,7 +30,9 @@ export default function WorksheetHistory({ quizResults, onReviewWorksheet }: Wor
       {quizResults.map((result) => {
         const isExpanded = expandedId === result.id;
         const scorePercent = result.score;
+        const isUngraded = scorePercent === -1;
         const scoreColor = 
+          isUngraded ? "slate" :
           scorePercent >= 80 ? "emerald" : 
           scorePercent >= 60 ? "amber" : 
           "rose";
@@ -47,15 +49,19 @@ export default function WorksheetHistory({ quizResults, onReviewWorksheet }: Wor
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {/* Score indicator */}
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm shrink-0 bg-${scoreColor}-500`}>
-                  {scorePercent}%
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm shrink-0 ${
+                  isUngraded ? 'bg-slate-400' : 
+                  scorePercent >= 80 ? 'bg-emerald-500' : 
+                  scorePercent >= 60 ? 'bg-amber-500' : 'bg-rose-500'
+                }`}>
+                  {isUngraded ? '🖨️' : `${scorePercent}%`}
                 </div>
 
                 {/* Title and metadata */}
                 <div className="min-w-0 flex-1">
                   <p className="font-bold text-slate-800 truncate text-sm">{result.assessmentTitle}</p>
                   <p className="text-xs text-slate-400">
-                    {result.correctCount}/{result.totalQuestions} correct • {result.date}
+                    {isUngraded ? 'Printed (not graded)' : `${result.correctCount}/${result.totalQuestions} correct`} • {result.date} • <span className="font-mono text-[10px]">{result.id}</span>
                   </p>
                 </div>
               </div>

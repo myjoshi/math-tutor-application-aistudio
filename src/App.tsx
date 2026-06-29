@@ -477,6 +477,32 @@ export default function App() {
 
       const generatedTest = await response.json();
       setCurrentQuiz(generatedTest);
+
+      // Auto-save the generated worksheet to history for future reference/reprint
+      const worksheetRecord: AssessmentResult = {
+        id: generatedTest.id,
+        assessmentId: generatedTest.id,
+        assessmentTitle: generatedTest.title,
+        topicId: generatedTest.topicId,
+        date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+        score: -1, // -1 indicates "not yet graded" (printed worksheet)
+        totalQuestions: generatedTest.questions.length,
+        correctCount: 0,
+        userAnswers: {},
+        questions: generatedTest.questions,
+        feedback: {
+          generalRemark: "Worksheet generated for printing. Not yet graded.",
+          strengths: generatedTest.skillsTested || [],
+          improvements: []
+        }
+      };
+
+      setQuizResults(prev => {
+        // Don't add duplicate if already exists (e.g., re-generation of same ID)
+        if (prev.some(r => r.id === worksheetRecord.id)) return prev;
+        return [worksheetRecord, ...prev];
+      });
+      saveQuizResult(worksheetRecord);
     } catch (e: any) {
       console.error("Quiz gen error:", e);
       const msg = e?.message || "Failed to generate quiz.";
@@ -528,7 +554,7 @@ export default function App() {
       totalQuestions: currentQuiz.questions.length,
       correctCount: correct,
       userAnswers: userQuizAnswers,
-      questions: currentQuiz.questions, // Store full questions for history/replay
+      questions: currentQuiz.questions,
       feedback: {
         generalRemark: percent === 100 
           ? "Outstanding! Absolutely perfect math answers." 
@@ -540,7 +566,16 @@ export default function App() {
       }
     };
 
-    setQuizResults(prev => [quizReport, ...prev]);
+    // Update the existing auto-saved record (score -1) or add new
+    setQuizResults(prev => {
+      const existingIdx = prev.findIndex(r => r.assessmentId === currentQuiz!.id || r.id === currentQuiz!.id);
+      if (existingIdx >= 0) {
+        const updated = [...prev];
+        updated[existingIdx] = quizReport;
+        return updated;
+      }
+      return [quizReport, ...prev];
+    });
     saveQuizResult(quizReport);
     setQuizScoreCard(quizReport);
 

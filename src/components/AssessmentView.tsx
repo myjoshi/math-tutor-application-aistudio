@@ -64,6 +64,7 @@ export default function AssessmentView({
   const [numQuestions, setNumQuestions] = useState<number>(10);
   const [deliveryMode] = useState<"print">("print");
   const [showAnswerKeyInPrint, setShowAnswerKeyInPrint] = useState<boolean>(true);
+  const [viewingWorksheet, setViewingWorksheet] = useState<AssessmentResult | null>(null);
 
   // Topics list including standard curriculum + mixed topics
   const standardTopics = Object.values(profile.skills);
@@ -89,6 +90,181 @@ export default function AssessmentView({
       : activeTopicObj.name;
     startTopicQuiz(selectedQuizTopic, matchedName, numQuestions);
   };
+
+  // FULL WORKSHEET REVIEW VIEW (printable)
+  if (viewingWorksheet) {
+    return (
+      <div className="flex-1 overflow-y-auto px-4 py-6 md:p-6 bg-slate-50 flex flex-col gap-5 pb-24 lg:pb-6">
+        {/* Back button and print - hidden during print */}
+        <div className="flex items-center justify-between no-print">
+          <button
+            onClick={() => setViewingWorksheet(null)}
+            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 active:scale-95 transition"
+          >
+            ← Back to Worksheets
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 active:scale-95 transition"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            Print Worksheet
+          </button>
+        </div>
+
+        {/* Printable Worksheet */}
+        <div className="max-w-3xl mx-auto w-full bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm print:shadow-none print:border-none print:rounded-none">
+          {/* Worksheet Header */}
+          <div className="border-b border-slate-200 pb-4 mb-6 print:border-black">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-lg font-bold text-slate-900">{viewingWorksheet.assessmentTitle}</h1>
+                <p className="text-xs text-slate-500 mt-1">
+                  Worksheet ID: <span className="font-mono font-bold">{viewingWorksheet.id}</span>
+                </p>
+                <p className="text-xs text-slate-500">
+                  Generated: <span className="font-semibold">{viewingWorksheet.date}</span>
+                </p>
+              </div>
+              <div className="text-right">
+                {viewingWorksheet.score === -1 ? (
+                  <>
+                    <div className="text-xl font-black text-slate-500">🖨️</div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase">
+                      Printed • {viewingWorksheet.totalQuestions} questions
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className={`text-2xl font-black ${
+                      viewingWorksheet.score >= 80 ? 'text-emerald-600' : 
+                      viewingWorksheet.score >= 60 ? 'text-amber-600' : 'text-rose-600'
+                    }`}>
+                      {viewingWorksheet.score}%
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase">
+                      {viewingWorksheet.correctCount}/{viewingWorksheet.totalQuestions} correct
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Questions */}
+          {viewingWorksheet.questions && viewingWorksheet.questions.length > 0 ? (
+            <div className="space-y-5">
+              {viewingWorksheet.questions.map((q: Question, idx: number) => {
+                const userAnswer = viewingWorksheet.userAnswers[q.id] || "";
+                const isCorrect = 
+                  userAnswer.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase() ||
+                  (q.type === "short-answer" && parseFloat(userAnswer) === parseFloat(q.correctAnswer));
+
+                return (
+                  <div key={q.id} className={`p-4 rounded-xl border ${
+                    isCorrect ? 'border-emerald-200 bg-emerald-50/30' : 'border-rose-200 bg-rose-50/30'
+                  }`}>
+                    <div className="flex items-start gap-3">
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                        isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                      }`}>
+                        {idx + 1}
+                      </span>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-slate-800 mb-2">{q.questionText}</p>
+
+                        {/* Options for multiple choice */}
+                        {q.type === "multiple-choice" && q.options && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-3">
+                            {q.options.map((opt, optIdx) => {
+                              const letter = String.fromCharCode(65 + optIdx);
+                              const isUserPick = userAnswer.trim().toLowerCase() === opt.trim().toLowerCase();
+                              const isCorrectOpt = q.correctAnswer.trim().toLowerCase() === opt.trim().toLowerCase();
+                              return (
+                                <div key={optIdx} className={`px-3 py-1.5 rounded-lg text-xs border ${
+                                  isCorrectOpt ? 'bg-emerald-100 border-emerald-300 font-bold text-emerald-800' :
+                                  isUserPick && !isCorrect ? 'bg-rose-100 border-rose-300 text-rose-800 line-through' :
+                                  'bg-slate-50 border-slate-200 text-slate-600'
+                                }`}>
+                                  <span className="font-bold mr-1">{letter}.</span> {opt}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Answer summary */}
+                        <div className="flex flex-wrap gap-3 text-xs">
+                          <span className={`px-2 py-1 rounded font-mono ${
+                            isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                          }`}>
+                            Your answer: {userAnswer || "(blank)"}
+                          </span>
+                          {!isCorrect && (
+                            <span className="px-2 py-1 rounded bg-indigo-100 text-indigo-800 font-mono">
+                              Correct: {q.correctAnswer}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Explanation for wrong answers */}
+                        {!isCorrect && (
+                          <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800">
+                            <p className="font-bold mb-1">💡 Explanation:</p>
+                            <p className="leading-relaxed">{q.explanation}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center p-8 text-slate-400">
+              <p className="text-sm font-semibold">Question details not available for this worksheet.</p>
+              <p className="text-xs mt-1">Only worksheets generated after the history feature was enabled will have full question data.</p>
+            </div>
+          )}
+
+          {/* Answer Key Summary (bottom) */}
+          {viewingWorksheet.questions && viewingWorksheet.questions.length > 0 && (
+            <div className="mt-8 pt-4 border-t border-slate-200">
+              <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-3">📋 Answer Key</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-xs">
+                {viewingWorksheet.questions.map((q: Question, idx: number) => (
+                  <div key={q.id} className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg p-2">
+                    <span className="font-bold text-slate-500">Q{idx + 1}:</span>
+                    <span className="font-mono text-indigo-700 font-bold truncate">{q.correctAnswer}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tutor Feedback */}
+          {viewingWorksheet.feedback && (
+            <div className="mt-6 p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
+              <p className="text-xs font-bold text-indigo-900 mb-2">🎓 Tutor's Feedback</p>
+              <p className="text-xs text-indigo-800 leading-relaxed italic">"{viewingWorksheet.feedback.generalRemark}"</p>
+              {viewingWorksheet.feedback.strengths.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-[10px] font-bold text-indigo-700 uppercase">Strengths:</p>
+                  <p className="text-xs text-indigo-700">{viewingWorksheet.feedback.strengths.join(", ")}</p>
+                </div>
+              )}
+              {viewingWorksheet.feedback.improvements.length > 0 && (
+                <div className="mt-1">
+                  <p className="text-[10px] font-bold text-amber-700 uppercase">Areas to Improve:</p>
+                  <p className="text-xs text-amber-700">{viewingWorksheet.feedback.improvements.join(", ")}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 md:p-6 bg-slate-50 flex flex-col gap-5 pb-24 lg:pb-6">
@@ -199,7 +375,7 @@ export default function AssessmentView({
           <WorksheetHistory 
             quizResults={quizResults}
             onReviewWorksheet={(result) => {
-              setQuizScoreCard(result);
+              setViewingWorksheet(result);
             }}
           />
         </div>

@@ -494,31 +494,66 @@ export default function ScannerHubView({
       {scans.length > 0 && (
         <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col gap-3">
           <div>
-            <h3 className="text-sm font-bold text-slate-800">Scan History</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Visible on Scan page only.</p>
+            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-indigo-600" />
+              Scanned Worksheets History
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">{scans.length} worksheet{scans.length !== 1 ? 's' : ''} scanned • Latest first</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {scans.map((scan) => (
-              <button
-                key={scan.id}
-                onClick={() => setSelectedScanHistory(scan)}
-                className="p-3.5 text-left bg-slate-50 hover:bg-slate-100 border border-slate-200/60 transition rounded-2xl flex justify-between items-start duration-100"
-              >
-                <div className="max-w-[74%] flex flex-col gap-1">
-                  <span className="text-[9px] text-indigo-700 bg-indigo-50 font-bold px-1.5 py-0.5 rounded-lg w-fit">
-                    Worksheet Scan
-                  </span>
-                  <h4 className="text-xs font-bold text-slate-800 leading-tight truncate">{scan.title}</h4>
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-1">
-                    <Clock className="w-3 h-3" />
-                    <span>{scan.date}</span>
+          <div className="grid grid-cols-1 gap-2.5">
+            {[...scans].sort((a, b) => {
+              // Sort by date descending (latest first)
+              const dateA = new Date(a.date).getTime();
+              const dateB = new Date(b.date).getTime();
+              if (!isNaN(dateB) && !isNaN(dateA)) return dateB - dateA;
+              return 0;
+            }).map((scan, idx) => {
+              const totals = getScanTotals(scan);
+              const scorePercent = totals.totalProblems > 0 
+                ? Math.round((totals.correctCount / totals.totalProblems) * 100) 
+                : 0;
+              const scoreColor = scorePercent >= 80 ? 'emerald' : scorePercent >= 60 ? 'amber' : 'rose';
+
+              return (
+                <button
+                  key={scan.id}
+                  onClick={() => setSelectedScanHistory(scan)}
+                  className="p-4 text-left bg-slate-50 hover:bg-slate-100 border border-slate-200/60 transition rounded-2xl flex justify-between items-center duration-100 gap-3"
+                >
+                  {/* Left: Info */}
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    {/* Score circle */}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-[11px] shrink-0 ${
+                      scorePercent >= 80 ? 'bg-emerald-500' : scorePercent >= 60 ? 'bg-amber-500' : 'bg-rose-500'
+                    }`}>
+                      {scorePercent}%
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs font-bold text-slate-800 leading-tight truncate">{scan.title}</h4>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {scan.date}
+                        </span>
+                        <span className="text-[10px] text-slate-400">•</span>
+                        <span className="text-[10px] font-mono text-indigo-600 font-semibold">{scan.id}</span>
+                      </div>
+                      <div className="mt-1">
+                        <span className="text-[10px] text-slate-500">
+                          {totals.correctCount}/{totals.totalProblems} correct
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <span className="text-xs font-extrabold text-indigo-700 bg-white border border-indigo-100 px-2 py-1 rounded-xl shadow-xs shrink-0">
-                  {getScanTotals(scan).correctCount}/{getScanTotals(scan).totalProblems}
-                </span>
-              </button>
-            ))}
+
+                  {/* Right: Arrow indicator */}
+                  <span className="text-slate-300 shrink-0">
+                    <ArrowLeft className="w-4 h-4 rotate-180" />
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

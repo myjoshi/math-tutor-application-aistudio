@@ -36,7 +36,6 @@ import ProfileView from "./components/ProfileView";
 import DashboardView from "./components/DashboardView";
 import ScannerHubView from "./components/ScannerHubView";
 import AssessmentView from "./components/AssessmentView";
-import MobileCamera from "./components/MobileCamera";
 import {
   saveStudentProfile,
   loadStudentProfile,
@@ -196,11 +195,58 @@ export default function App() {
   const [scanError, setScanError] = useState<string | null>(null);
   const [currentScanResult, setCurrentScanResult] = useState<ScannedPaperResult | null>(null);
   const [selectedScanHistory, setSelectedScanHistory] = useState<ScannedPaperResult | null>(null);
+  const [cameraActive, setCameraActive] = useState(false);
 
-  // Handle photo captured from mobile camera
-  const handleMobileCameraCapture = (photoBase64: string) => {
-    setScanImagesBase64(prev => [...prev, photoBase64]);
-    setUseCamera(false);
+  // Audio/video stream refs
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const startCamera = async () => {
+    try {
+      setScanError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+        setCameraActive(true);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setScanError("Could not access camera. Please check camera permissions in your browser system settings, or pick an image file directly.");
+      setUseCamera(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setCameraActive(false);
+  };
+
+  useEffect(() => {
+    if (useCamera) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    return () => stopCamera();
+  }, [useCamera]);
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement("canvas");
+      canvas.width = videoRef.current.videoWidth || 640;
+      canvas.height = videoRef.current.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/jpeg");
+        setScanImagesBase64(prev => [...prev, dataUrl]);
+      }
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -584,6 +630,8 @@ export default function App() {
             triggerCheckPaper={triggerCheckPaper}
             handleClearCurrentScan={handleClearCurrentScan}
             handleFileUpload={handleFileUpload}
+            videoRef={videoRef}
+            capturePhoto={capturePhoto}
             setActiveTab={setActiveTab}
           />
         );
@@ -764,14 +812,6 @@ export default function App() {
             renderTabContent()
           )}
         </div>
-
-        {/* Mobile Camera Modal */}
-        {useCamera && (
-          <MobileCamera
-            onCapturePhoto={handleMobileCameraCapture}
-            onClose={() => setUseCamera(false)}
-          />
-        )}
 
         {/* Responsive Bottom Navigation Bar */}
         <div className="no-print">

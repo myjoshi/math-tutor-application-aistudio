@@ -18,6 +18,8 @@ interface ScannerHubProps {
   selectedScanHistory: ScannedPaperResult | null;
   triggerCheckPaper: () => Promise<void>;
   handleClearCurrentScan: () => void;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  capturePhoto: () => void;
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   setActiveTab: (tab: "dashboard" | "scanner" | "quiz" | "profile") => void;
 }
@@ -38,6 +40,8 @@ export default function ScannerHubView({
   selectedScanHistory,
   triggerCheckPaper,
   handleClearCurrentScan,
+  videoRef,
+  capturePhoto,
   handleFileUpload,
   setActiveTab
 }: ScannerHubProps) {
@@ -112,75 +116,107 @@ export default function ScannerHubView({
                 1. Capture or Select Picture
               </h3>
 
-              {/* File Upload drag-and-drop container */}
-              <div className="border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50/80 transition rounded-3xl p-6 text-center flex flex-col items-center justify-center min-h-[220px] relative group overflow-hidden">
-                {scanImagesBase64.length > 0 ? (
-                  <div className="w-full">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                      {scanImagesBase64.map((image, index) => (
-                        <div key={`${index}-${image.slice(0, 20)}`} className="relative">
-                          <img
-                            src={image}
-                            alt={`Worksheet page ${index + 1}`}
-                            className="h-24 w-full rounded-xl object-cover border border-slate-200 shadow-sm bg-white"
-                          />
-                          <span className="absolute bottom-1 left-1 bg-slate-900/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                            Page {index + 1}
-                          </span>
-                          <button
-                            onClick={() => removeScanImageAt(index)}
-                            className="absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full p-1 shadow-md active:scale-110 transition duration-150"
-                            title="Remove page"
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+              {useCamera ? (
+                /* Native video streaming container */
+                <div id="camera-preview-container" className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-950 aspect-video relative flex flex-col items-center justify-center">
+                  <video
+                    ref={videoRef}
+                    className="w-full h-full object-cover"
+                    playsInline
+                    muted
+                  />
+                  <div className="absolute bottom-4 flex gap-2.5 z-10 w-full px-4 justify-center">
                     <button
-                      onClick={clearScanImages}
-                      className="mt-3 text-[10px] font-bold text-rose-600 hover:text-rose-700"
+                      onClick={capturePhoto}
+                      className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 active:scale-95 duration-100 cursor-pointer"
                     >
-                      Clear all pages
+                      <Camera className="w-4 h-4" />
+                      Take Photo
+                    </button>
+                    <button
+                      onClick={() => setUseCamera(false)}
+                      className="px-3.5 py-2.5 bg-slate-800/90 hover:bg-slate-800 text-slate-200 rounded-xl text-xs font-bold active:scale-95 duration-100"
+                    >
+                      Cancel
                     </button>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-6 sm:py-4">
-                    <div className="w-12 h-12 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-3 group-hover:scale-110 transition duration-200">
-                      <Upload className="w-5 h-5 animate-pulse" />
-                    </div>
-                    <p className="text-xs font-bold text-slate-700 leading-tight text-center px-3">
-                      <label className="text-indigo-600 hover:underline cursor-pointer block w-full">
-                        Click to pick homework image
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={handleFileUpload}
-                          className="hidden"
-                        />
-                      </label>
-                    </p>
-                    <p className="text-[10px] text-slate-400 mt-2 font-medium text-center px-3">Supports JPG, PNG, GIF up to 10MB (multi-page allowed)</p>
+                </div>
+              ) : (
+                /* Static Image view (or empty upload dragbox area) */
+                <div className="space-y-4">
+                  
+                  {/* File Upload drag-and-drop container */}
+                  <div className="border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50/80 transition rounded-3xl p-6 text-center flex flex-col items-center justify-center min-h-[220px] relative group overflow-hidden">
+                    {scanImagesBase64.length > 0 ? (
+                      <div className="w-full">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                          {scanImagesBase64.map((image, index) => (
+                            <div key={`${index}-${image.slice(0, 20)}`} className="relative">
+                              <img
+                                src={image}
+                                alt={`Worksheet page ${index + 1}`}
+                                className="h-24 w-full rounded-xl object-cover border border-slate-200 shadow-sm bg-white"
+                              />
+                              <span className="absolute bottom-1 left-1 bg-slate-900/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                Page {index + 1}
+                              </span>
+                              <button
+                                onClick={() => removeScanImageAt(index)}
+                                className="absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full p-1 shadow-md active:scale-110 transition duration-150"
+                                title="Remove page"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <button
+                          onClick={clearScanImages}
+                          className="mt-3 text-[10px] font-bold text-rose-600 hover:text-rose-700"
+                        >
+                          Clear all pages
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-4">
+                        <div className="w-12 h-12 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mb-3 group-hover:scale-110 transition duration-200">
+                          <Upload className="w-5 h-5 animate-pulse" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-700 leading-tight">
+                          <label className="text-indigo-600 hover:underline cursor-pointer">
+                            Click to pick homework image
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={handleFileUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-1 font-medium">Supports JPG, PNG, GIF up to 10MB (multi-page allowed)</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Device webcam trigger */}
-              <button
-                onClick={() => setUseCamera(true)}
-                className="w-full py-3 border border-slate-200 hover:border-indigo-300 rounded-2xl text-xs font-bold text-slate-700 hover:text-indigo-700 hover:bg-indigo-50/30 transition duration-150 flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
-              >
-                <Camera className="w-4 h-4 text-slate-500" />
-                Capture Page with Camera
-              </button>
+                  {/* Device webcam trigger */}
+                  <button
+                    onClick={() => setUseCamera(true)}
+                    className="w-full py-3 border border-slate-200 hover:border-indigo-300 rounded-2xl text-xs font-bold text-slate-700 hover:text-indigo-700 hover:bg-indigo-50/30 transition duration-150 flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                  >
+                    <Camera className="w-4 h-4 text-slate-500" />
+                    Capture Page with Camera
+                  </button>
+
+                </div>
+              )}
 
             </div>
 
             {/* Submission forms (bottom) */}
             <div className="space-y-4 mt-6">
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
                   Title or Topic Label (Optional)
                 </label>
                 <input
@@ -188,14 +224,14 @@ export default function ScannerHubView({
                   placeholder="e.g. Ratio practice sheet"
                   value={customScanLabel}
                   onChange={(e) => setCustomScanLabel(e.target.value)}
-                  className="w-full px-4 py-3 sm:py-2 rounded-xl border border-slate-200 text-sm sm:text-xs focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 font-medium text-slate-800"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-indigo-600 font-medium text-slate-800"
                 />
               </div>
 
               <button
                 onClick={triggerCheckPaper}
                 disabled={scanImagesBase64.length === 0 || isScanning}
-                className={`w-full py-4 sm:py-3.5 rounded-2xl text-xs font-bold tracking-wide shadow-md flex items-center justify-center gap-2 transition duration-200 active:scale-98 ${
+                className={`w-full py-3.5 rounded-2xl text-xs font-bold tracking-wide shadow-md flex items-center justify-center gap-2 transition duration-200 active:scale-98 ${
                   scanImagesBase64.length > 0 && !isScanning
                     ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100 cursor-pointer"
                     : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"

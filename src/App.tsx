@@ -244,7 +244,45 @@ export default function App() {
       if (ctx) {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL("image/jpeg");
-        setScanImagesBase64(prev => [...prev, dataUrl]);
+
+        // Play shutter sound
+        try {
+          const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const oscillator = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+          oscillator.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+          oscillator.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.08);
+          gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+          oscillator.start(audioCtx.currentTime);
+          oscillator.stop(audioCtx.currentTime + 0.1);
+        } catch (e) { /* audio not critical */ }
+
+        // Haptic feedback
+        if (navigator.vibrate) {
+          navigator.vibrate(50);
+        }
+
+        // White flash effect
+        const flash = document.getElementById("shutter-flash");
+        if (flash) {
+          flash.style.opacity = "0.8";
+          setTimeout(() => { flash.style.opacity = "0"; }, 150);
+        }
+
+        // Show capture confirmation
+        const confirm = document.getElementById("capture-confirm");
+        if (confirm) {
+          confirm.style.opacity = "1";
+          setTimeout(() => { confirm.style.opacity = "0"; }, 1200);
+        }
+
+        // Add image after brief delay so user sees feedback
+        setTimeout(() => {
+          setScanImagesBase64(prev => [...prev, dataUrl]);
+        }, 400);
       }
     }
   };

@@ -117,28 +117,49 @@ export default function ScannerHubView({
               </h3>
 
               {useCamera ? (
-                /* Native video streaming container */
-                <div id="camera-preview-container" className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-950 aspect-video relative flex flex-col items-center justify-center">
+                /* Full portrait camera view */
+                <div id="camera-preview-container" className="border border-slate-200 rounded-2xl overflow-hidden bg-slate-950 relative flex flex-col items-center justify-center" style={{ aspectRatio: '3/4', maxHeight: '70vh' }}>
                   <video
                     ref={videoRef}
                     className="w-full h-full object-cover"
                     playsInline
+                    autoPlay
                     muted
                   />
-                  <div className="absolute bottom-4 flex gap-2.5 z-10 w-full px-4 justify-center">
-                    <button
-                      onClick={capturePhoto}
-                      className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 active:scale-95 duration-100 cursor-pointer"
-                    >
-                      <Camera className="w-4 h-4" />
-                      Take Photo
-                    </button>
+                  
+                  {/* Shutter flash overlay - triggered via JS */}
+                  <div id="shutter-flash" className="absolute inset-0 bg-white opacity-0 pointer-events-none transition-opacity duration-150 z-20"></div>
+
+                  {/* Capture confirmation overlay */}
+                  <div id="capture-confirm" className="absolute inset-0 flex items-center justify-center pointer-events-none z-30 opacity-0 transition-opacity duration-300">
+                    <div className="bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="text-sm font-bold">Photo Captured!</span>
+                    </div>
+                  </div>
+
+                  {/* Guide overlay */}
+                  <div className="absolute inset-4 border-2 border-dashed border-white/20 rounded-xl pointer-events-none z-10"></div>
+                  <p className="absolute top-3 left-0 right-0 text-center text-white/70 text-[10px] font-bold z-10">
+                    Position worksheet within frame
+                  </p>
+
+                  {/* Controls at bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-3 z-10 pb-5 pt-8 bg-gradient-to-t from-slate-950/90 to-transparent">
                     <button
                       onClick={() => setUseCamera(false)}
-                      className="px-3.5 py-2.5 bg-slate-800/90 hover:bg-slate-800 text-slate-200 rounded-xl text-xs font-bold active:scale-95 duration-100"
+                      className="px-3.5 py-2.5 bg-slate-800/90 hover:bg-slate-700 text-slate-200 rounded-full text-xs font-bold active:scale-95 duration-100"
                     >
                       Cancel
                     </button>
+                    <button
+                      onClick={capturePhoto}
+                      className="w-16 h-16 bg-white hover:bg-slate-100 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition duration-150 border-4 border-slate-300"
+                      aria-label="Capture photo"
+                    >
+                      <Camera className="w-7 h-7 text-slate-800" />
+                    </button>
+                    <div className="w-[52px]"></div> {/* Spacer for centering */}
                   </div>
                 </div>
               ) : (

@@ -1,6 +1,6 @@
 import React from "react";
 import { StudentProfile, ScannedPaperResult, AssessmentResult } from "../types";
-import { ArrowRight, BookOpen, Camera, CheckCircle, Clock, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, Camera } from "lucide-react";
 
 interface DashboardViewProps {
   profile: StudentProfile;
@@ -178,77 +178,6 @@ export default function DashboardView({
           </button>
         </div>
 
-      </div>
-
-      {/* Primary Log Center: Evaluations History */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs flex flex-col gap-4">
-        <div>
-          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-            <span>📋</span>
-            Assignment Gradebook Log
-          </h3>
-          <p className="text-xs text-slate-400 mt-0.5">Comprehensive audit reports on virtual quizzes and real scans</p>
-        </div>
-
-        {scans.length === 0 && quizResults.length === 0 ? (
-          <div className="py-14 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-            <span className="text-2xl block mb-2">🎈</span>
-            <p className="text-slate-700 text-xs font-bold">Your gradebook is empty!</p>
-            <p className="text-slate-400 text-[10.5px] mt-1 max-w-xs mx-auto">
-              Scan a written school sheet, draft equations, or attempt a quick practice quiz to log grades.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            
-            {/* Quizzes list */}
-            {quizResults.length > 0 && (
-              <div className="flex flex-col gap-2 mt-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">
-                  Topic Assessments Finished ({quizResults.length})
-                </span>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {quizResults.map((res) => (
-                    <div
-                      key={res.id}
-                      className="p-3.5 bg-slate-50 border border-slate-200/60 rounded-2xl flex justify-between items-start"
-                    >
-                      <div className="max-w-[70%] flex flex-col gap-1">
-                        <span className="text-[9px] text-emerald-700 bg-emerald-50 font-bold px-1.5 py-0.5 rounded-lg w-fit">
-                          Curriculum Quiz
-                        </span>
-                        <h4 className="text-xs font-bold text-slate-800 leading-tight truncate">
-                          {res.assessmentTitle}
-                        </h4>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{res.date}</span>
-                        </div>
-                        <p className="text-[10px] text-slate-500 italic mt-1 leading-relaxed">
-                          "{res.feedback.generalRemark}"
-                        </p>
-                      </div>
-
-                      <div className="text-right flex flex-col items-end">
-                        <span className={`text-xs font-extrabold px-2.5 py-1 rounded-xl shadow-xs ${
-                          res.score >= 80 
-                            ? "bg-emerald-50 text-emerald-800 border border-emerald-100" 
-                            : res.score >= 50 
-                              ? "bg-amber-50 text-amber-800 border border-amber-100" 
-                              : "bg-rose-50 text-rose-750 border border-rose-100"
-                        }`}>
-                          {res.score}%
-                        </span>
-                        <p className="text-[10px] text-slate-400 mt-1.5">{res.correctCount}/{res.totalQuestions} Solved</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-          </div>
-        )}
       </div>
 
     </div>

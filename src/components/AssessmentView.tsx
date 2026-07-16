@@ -1,13 +1,11 @@
 import React, { useState } from "react";
-import { StudentProfile, Assessment, AssessmentResult, Question } from "../types";
+import { StudentProfile, Assessment, AssessmentResult } from "../types";
 import WorksheetHistory from "./WorksheetHistory";
-import { 
-  BookOpen, 
-  CheckCircle, 
-  XCircle, 
-  ArrowRight, 
-  Sparkles, 
-  RefreshCw, 
+import {
+  BookOpen,
+  ArrowRight,
+  Sparkles,
+  RefreshCw,
   AlertCircle,
   Printer,
   FileText,
@@ -91,177 +89,211 @@ export default function AssessmentView({
     startTopicQuiz(selectedQuizTopic, matchedName, numQuestions);
   };
 
-  // FULL WORKSHEET REVIEW VIEW (printable)
+  // WORKSHEET HISTORY REPRINT VIEW — same blank format as newly generated sheet
   if (viewingWorksheet) {
+    const historyQuestions = viewingWorksheet.questions || [];
+    const viewTopicName =
+      topicsList.find(t => t.topicId === viewingWorksheet.topicId)?.name ||
+      viewingWorksheet.topicId;
+
     return (
       <div className="flex-1 overflow-y-auto px-4 py-6 md:p-6 bg-slate-50 flex flex-col gap-5 pb-24 lg:pb-6">
-        {/* Back button and print - hidden during print */}
-        <div className="flex items-center justify-between no-print">
-          <button
-            onClick={() => setViewingWorksheet(null)}
-            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 active:scale-95 transition"
-          >
-            ← Back to Worksheets
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 active:scale-95 transition"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            Print Worksheet
-          </button>
-        </div>
 
-        {/* Printable Worksheet */}
-        <div className="max-w-3xl mx-auto w-full bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm print:shadow-none print:border-none print:rounded-none">
-          {/* Worksheet Header */}
-          <div className="border-b border-slate-200 pb-4 mb-6 print:border-black">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-lg font-bold text-slate-900">{viewingWorksheet.assessmentTitle}</h1>
-                <p className="text-xs text-slate-500 mt-1">
-                  Worksheet ID: <span className="font-mono font-bold">{viewingWorksheet.id}</span>
-                </p>
-                <p className="text-xs text-slate-500">
-                  Generated: <span className="font-semibold">{viewingWorksheet.date}</span>
-                </p>
-              </div>
-              <div className="text-right">
-                {viewingWorksheet.score === -1 ? (
-                  <>
-                    <div className="text-xl font-black text-slate-500">🖨️</div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase">
-                      Printed • {viewingWorksheet.totalQuestions} questions
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <div className={`text-2xl font-black ${
-                      viewingWorksheet.score >= 80 ? 'text-emerald-600' : 
-                      viewingWorksheet.score >= 60 ? 'text-amber-600' : 'text-rose-600'
-                    }`}>
-                      {viewingWorksheet.score}%
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase">
-                      {viewingWorksheet.correctCount}/{viewingWorksheet.totalQuestions} correct
-                    </p>
-                  </>
-                )}
-              </div>
+        {/* Floating control bar */}
+        <div className="no-print bg-slate-900 text-white rounded-2xl p-4 flex flex-wrap justify-between items-center gap-4 border border-slate-800 shadow-xl max-w-4xl mx-auto w-full">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center font-bold text-sm">
+              🖨️
+            </div>
+            <div>
+              <h4 className="text-xs font-bold">Printable Worksheet Canvas</h4>
+              <p className="text-[10px] text-slate-400 font-medium">
+                {historyQuestions.length} questions on {viewTopicName}
+              </p>
             </div>
           </div>
 
-          {/* Questions */}
-          {viewingWorksheet.questions && viewingWorksheet.questions.length > 0 ? (
-            <div className="space-y-5">
-              {viewingWorksheet.questions.map((q: Question, idx: number) => {
-                const userAnswer = viewingWorksheet.userAnswers[q.id] || "";
-                const isCorrect = 
-                  userAnswer.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase() ||
-                  (q.type === "short-answer" && parseFloat(userAnswer) === parseFloat(q.correctAnswer));
+          <div className="flex items-center gap-5">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-200">
+              <input
+                type="checkbox"
+                checked={showAnswerKeyInPrint}
+                onChange={(e) => setShowAnswerKeyInPrint(e.target.checked)}
+                className="rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-slate-800"
+              />
+              <span>Include Solution Key (at back)</span>
+            </label>
 
-                return (
-                  <div key={q.id} className={`p-4 rounded-xl border ${
-                    isCorrect ? 'border-emerald-200 bg-emerald-50/30' : 'border-rose-200 bg-rose-50/30'
-                  }`}>
-                    <div className="flex items-start gap-3">
-                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                        isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-                      }`}>
-                        {idx + 1}
-                      </span>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-slate-800 mb-2">{q.questionText}</p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-lg transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Worksheet</span>
+              </button>
 
-                        {/* Options for multiple choice */}
-                        {q.type === "multiple-choice" && q.options && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-3">
-                            {q.options.map((opt, optIdx) => {
-                              const letter = String.fromCharCode(65 + optIdx);
-                              const isUserPick = userAnswer.trim().toLowerCase() === opt.trim().toLowerCase();
-                              const isCorrectOpt = q.correctAnswer.trim().toLowerCase() === opt.trim().toLowerCase();
-                              return (
-                                <div key={optIdx} className={`px-3 py-1.5 rounded-lg text-xs border ${
-                                  isCorrectOpt ? 'bg-emerald-100 border-emerald-300 font-bold text-emerald-800' :
-                                  isUserPick && !isCorrect ? 'bg-rose-100 border-rose-300 text-rose-800 line-through' :
-                                  'bg-slate-50 border-slate-200 text-slate-600'
-                                }`}>
-                                  <span className="font-bold mr-1">{letter}.</span> {opt}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* Answer summary */}
-                        <div className="flex flex-wrap gap-3 text-xs">
-                          <span className={`px-2 py-1 rounded font-mono ${
-                            isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                          }`}>
-                            Your answer: {userAnswer || "(blank)"}
-                          </span>
-                          {!isCorrect && (
-                            <span className="px-2 py-1 rounded bg-indigo-100 text-indigo-800 font-mono">
-                              Correct: {q.correctAnswer}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Explanation for wrong answers */}
-                        {!isCorrect && (
-                          <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800">
-                            <p className="font-bold mb-1">💡 Explanation:</p>
-                            <p className="leading-relaxed">{q.explanation}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              <button
+                onClick={() => setViewingWorksheet(null)}
+                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition cursor-pointer"
+              >
+                ← Back
+              </button>
             </div>
-          ) : (
-            <div className="text-center p-8 text-slate-400">
-              <p className="text-sm font-semibold">Question details not available for this worksheet.</p>
-              <p className="text-xs mt-1">Only worksheets generated after the history feature was enabled will have full question data.</p>
-            </div>
-          )}
+          </div>
+        </div>
 
-          {/* Answer Key Summary (bottom) */}
-          {viewingWorksheet.questions && viewingWorksheet.questions.length > 0 && (
-            <div className="mt-8 pt-4 border-t border-slate-200">
-              <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-3">📋 Answer Key</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-xs">
-                {viewingWorksheet.questions.map((q: Question, idx: number) => (
-                  <div key={q.id} className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-lg p-2">
-                    <span className="font-bold text-slate-500">Q{idx + 1}:</span>
-                    <span className="font-mono text-indigo-700 font-bold truncate">{q.correctAnswer}</span>
-                  </div>
-                ))}
+        {historyQuestions.length === 0 ? (
+          <div className="max-w-3xl mx-auto w-full bg-white border border-slate-200 rounded-2xl p-8 text-center text-slate-400 shadow-sm">
+            <p className="text-sm font-semibold">Question details not available for this worksheet.</p>
+            <p className="text-xs mt-1">Only worksheets generated after the history feature was enabled will have full question data.</p>
+          </div>
+        ) : (
+          <div id="worksheet-print-area" className="bg-white border border-slate-200 rounded-2xl max-w-3xl mx-auto w-full p-4 md:p-6 shadow-sm text-slate-900 font-serif relative overflow-visible">
+
+            {/* School Title Header bar */}
+            <div className="text-center pb-6 border-b-2 border-slate-900">
+              <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight text-slate-950 font-sans">
+                Mathematics Assessment Center Worksheet
+              </h2>
+              <div className="flex justify-center items-center gap-4 mt-2 text-xs font-sans text-slate-500 font-bold uppercase tracking-wider">
+                <span>Topic: {viewTopicName}</span>
+                <span>•</span>
+                <span>Worksheet ID: {viewingWorksheet.id}</span>
               </div>
             </div>
-          )}
 
-          {/* Tutor Feedback */}
-          {viewingWorksheet.feedback && (
-            <div className="mt-6 p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
-              <p className="text-xs font-bold text-indigo-900 mb-2">🎓 Tutor's Feedback</p>
-              <p className="text-xs text-indigo-800 leading-relaxed italic">"{viewingWorksheet.feedback.generalRemark}"</p>
-              {viewingWorksheet.feedback.strengths.length > 0 && (
-                <div className="mt-2">
-                  <p className="text-[10px] font-bold text-indigo-700 uppercase">Strengths:</p>
-                  <p className="text-xs text-indigo-700">{viewingWorksheet.feedback.strengths.join(", ")}</p>
-                </div>
-              )}
-              {viewingWorksheet.feedback.improvements.length > 0 && (
-                <div className="mt-1">
-                  <p className="text-[10px] font-bold text-amber-700 uppercase">Areas to Improve:</p>
-                  <p className="text-xs text-amber-700">{viewingWorksheet.feedback.improvements.join(", ")}</p>
-                </div>
-              )}
+            {/* Student metadata fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-4 font-sans text-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-slate-800 uppercase shrink-0">Student Name:</span>
+                <div className="flex-1 border-b border-dashed border-slate-400 h-5"></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-slate-800 uppercase shrink-0">Date:</span>
+                <div className="flex-1 border-b border-dashed border-slate-400 h-5"></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-slate-800 uppercase shrink-0">Score:</span>
+                <span className="font-black text-slate-500 ml-1">__________ / {historyQuestions.length}</span>
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* Instruction block */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 font-sans text-[11px] leading-relaxed text-slate-600 mb-4">
+              <p className="font-bold text-slate-800">General Directions for Student:</p>
+              <ul className="list-disc list-inside mt-1 space-y-0.5">
+                <li>Read each question carefully before attempting to solve.</li>
+                <li>For Multiple Choice exercises, bubble/check the box corresponding to the correct letter option.</li>
+                <li>For Numerical Write-in exercises, write your final exact calculation inside the designated answer box.</li>
+                <li>Use the scratchpad boxes provided to write down step-by-step arithmetic steps or sketch models.</li>
+              </ul>
+            </div>
+
+            {/* Questions block */}
+            <div className="space-y-2 @media-print:space-y-1">
+              {historyQuestions.map((q, idx) => (
+                <div key={q.id} className="space-y-2 pb-4 border-b border-slate-100 last:border-0 last:pb-0 break-inside-avoid">
+
+                  {/* Question header */}
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="font-sans font-black text-slate-900 text-sm bg-slate-100 w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-sm md:text-base font-bold text-slate-950 leading-relaxed font-sans">
+                        {q.questionText}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Answer slots */}
+                  {q.type === "multiple-choice" && q.options ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 font-sans pl-10 pt-1">
+                      {q.options.map((opt, optId) => (
+                        <div key={optId} className="flex items-center gap-3 text-xs text-slate-800">
+                          <div className="w-5 h-5 rounded border border-slate-400 flex items-center justify-center font-bold text-[9.5px] text-slate-400 select-none shrink-0">
+                            [  ]
+                          </div>
+                          <span className="font-bold text-slate-600">{String.fromCharCode(65 + optId)}.</span>
+                          <span>{opt}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="font-sans pl-10 pt-1 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-black text-slate-700 uppercase">Write Your Final Answer Here:</span>
+                        <div className="w-48 border border-slate-300 rounded-lg p-2.5 h-9 bg-slate-50/30"></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Calculation scratchpad */}
+                  <div className="pl-10 pt-2 font-sans">
+                    <div className="border border-dashed border-slate-300 rounded-xl p-3 bg-slate-50/20 text-[9px] text-slate-400 tracking-wider uppercase font-black">
+                      <span>✂️ scratchpad area (show calculation work)</span>
+                      <div className="h-10"></div>
+                    </div>
+                  </div>
+
+                </div>
+              ))}
+            </div>
+
+            {/* BACK-PAGE TEACHER ANSWER KEY */}
+            {showAnswerKeyInPrint && (
+              <div className="mt-16 pt-12 border-t-4 border-double border-slate-900 font-sans" style={{ pageBreakBefore: "always" }}>
+
+                <div className="text-center pb-6 mb-8 border-b-2 border-slate-900">
+                  <h3 className="text-lg md:text-xl font-black uppercase text-indigo-950">
+                    OFFICIAL ASSESSMENT ANSWER KEY
+                  </h3>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
+                    FOR TEACHER / PARENT REFERENCE ONLY • SOLUTIONS & BREAKDOWNS
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  {historyQuestions.map((q, idx) => (
+                    <div key={q.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200 break-inside-avoid text-xs">
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-200/60 mb-2">
+                        <span className="font-black text-slate-800 uppercase text-[10px]">
+                          Exercise {idx + 1} Answer Key
+                        </span>
+                        <span className="px-2 py-0.5 bg-white border border-slate-200 rounded font-bold text-[9px] text-slate-500 uppercase">
+                          {q.type === "multiple-choice" ? "Multiple Choice" : "Numerical Input"}
+                        </span>
+                      </div>
+
+                      <p className="font-bold text-slate-900 mb-2 leading-relaxed">
+                        Q: {q.questionText}
+                      </p>
+
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-[10.5px] font-black text-emerald-800 uppercase bg-emerald-100 p-1 px-2.5 rounded">
+                          CORRECT ANSWER: {q.correctAnswer}
+                        </span>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-lg border border-slate-100">
+                        <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-wider block mb-1">
+                          Step-by-Step Mathematical Explanation:
+                        </span>
+                        <p className="text-slate-600 leading-relaxed text-[11px] font-medium">
+                          {q.explanation}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+            )}
+
+          </div>
+        )}
+
       </div>
     );
   }

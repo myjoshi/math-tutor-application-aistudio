@@ -3,6 +3,7 @@ import path from "path";
 import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+import { validateAndCorrectQuestions } from "./src/utils/answerValidation";
 
 // Load environment variables — .env.local takes priority over .env
 dotenv.config({ path: ".env.local" });
@@ -129,12 +130,19 @@ app.post("/api/generate-test", async (req, res) => {
     const complexityIncreaseInstructions = `Within the assessment itself, the questions MUST gradually increase in complexity. Arrange the questions so that the first few (Q1 to Q3) are accessible warm-up problems, the middle questions are standard proficiency challenges, and the final questions (from Q7 onwards) are advanced/stretch multi-step problems requiring deep critical thinking.`;
 
     const promptText = `Generate a standard 6th-grade math assessment with exactly ${numQuestions} unique, clear questions testing the topic: '${topicName}' (Topic ID: ${topicId}).
-${topicId === "mixed" 
-  ? "Since this is a mixed assessment, distribute the questions across all major 6th-grade CCSS standards: ratios and rates, the number system (decimals, fractions, division), equations and expressions, basic geometry, and statistics/plots." 
+${topicId === "mixed"
+  ? "Since this is a mixed assessment, distribute the questions across all major 6th-grade CCSS standards: ratios and rates, the number system (decimals, fractions, division), equations and expressions, basic geometry, and statistics/plots."
   : "Make sure to test actual core 6th-grade standards for this specific topic, such as ratios, fractions, volume, multi-digit decimal division, negative numbers, or simple equations depending on the topic."}
 
 Include approximately 50% multiple-choice and 50% short-answer questions.
 Conform strictly to the response schema. Keep mathematical notations simple and understandable. Each question id must be like q1, q2, ... q${numQuestions}.
+
+CRITICAL REQUIREMENT - ANSWER ACCURACY:
+Before generating the correctAnswer field for each question, you MUST:
+1. Completely solve the problem yourself
+2. Verify that your correctAnswer actually solves or satisfies the question
+3. Make sure your explanation steps lead to the same correctAnswer
+4. If you find a discrepancy between your solution and the correctAnswer field, fix it so they match
 
 PROFICIENCY LEVEL GUIDELINE:
 ${masteryInfo}
@@ -161,6 +169,23 @@ ${complexityIncreaseInstructions}`;
     }
 
     const testObject = JSON.parse(text.trim());
+
+    // Validate and auto-correct any questions with incorrect answers
+    const { correctedQuestions, report } = validateAndCorrectQuestions(testObject.questions);
+    testObject.questions = correctedQuestions;
+    testObject.validationReport = report;
+
+    // Log validation issues for monitoring
+    if (report.correctedQuestions > 0) {
+      console.warn(`[VALIDATION] Test: Corrected ${report.correctedQuestions}/${report.totalQuestions} questions`);
+      report.issues.forEach(issue => {
+        console.warn(`  - Q${issue.questionId}: ${issue.issue}`);
+        if (issue.correctedFrom && issue.correctedTo) {
+          console.warn(`    Changed answer from "${issue.correctedFrom}" to "${issue.correctedTo}"`);
+        }
+      });
+    }
+
     // Attach an ID for frontend convenience
     testObject.id = `test_${Date.now()}`;
     testObject.topicId = topicId;

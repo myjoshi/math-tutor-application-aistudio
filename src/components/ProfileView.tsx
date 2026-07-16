@@ -170,40 +170,68 @@ export default function ProfileView({
 
       {/* Badges Section */}
       <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-4">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-            <Award className="w-4.5 h-4.5 text-indigo-500" />
-            Unlocked Badges
+            <Award className="w-4 h-4 text-indigo-500" />
+            Merit Stickers
           </h3>
-          <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded-full">
-            {profile.badges.length}/{BADGE_LIST.length}
+          <span className="text-[10px] text-indigo-700 font-bold bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">
+            {profile.badges.length} / {BADGE_LIST.length} earned
           </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2.5">
           {BADGE_LIST.map((badge) => {
             const unlocked = profile.badges.includes(badge.id);
             return (
               <div
                 key={badge.id}
-                title={`${badge.name}: ${badge.desc}`}
-                className={`relative p-3 rounded-2xl border flex flex-col items-center justify-center text-center transition-all ${
+                title={unlocked ? `✅ ${badge.name}: ${badge.desc}` : `🔒 ${badge.unlockHint}`}
+                className={`relative p-3 rounded-2xl border flex flex-col items-center justify-center text-center transition-all duration-200 cursor-default select-none ${
                   unlocked
-                    ? "bg-white border-indigo-200 shadow-sm cursor-help scale-100"
-                    : "bg-slate-50/50 border-slate-200/40 opacity-40 select-none"
+                    ? `${badge.bg} ${badge.border} shadow-md ${badge.shadow} scale-100`
+                    : "bg-slate-50 border-slate-200/50 opacity-40 grayscale"
                 }`}
               >
-                <span className="text-2xl mb-1">{badge.icon}</span>
-                <span className="text-[9px] font-extrabold text-slate-800 leading-tight block truncate w-full">
+                {/* Glow ring for unlocked */}
+                {unlocked && (
+                  <div className={`absolute inset-0 rounded-2xl border-2 ${badge.border} opacity-40 pointer-events-none`} />
+                )}
+
+                <span className={`text-2xl mb-1.5 leading-none transition-transform ${unlocked ? "drop-shadow-sm" : ""}`}>
+                  {badge.icon}
+                </span>
+                <span className="text-[8.5px] font-extrabold text-slate-700 leading-tight text-center line-clamp-2">
                   {badge.name}
                 </span>
+
+                {/* Earned indicator */}
                 {unlocked && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 shadow-xs"></span>
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+                    <span className="text-[7px] text-white font-black">✓</span>
+                  </span>
+                )}
+
+                {/* Lock icon for locked */}
+                {!unlocked && (
+                  <span className="absolute bottom-1.5 right-1.5 text-[9px] text-slate-400">🔒</span>
                 )}
               </div>
             );
           })}
         </div>
+
+        {/* Encouragement footer */}
+        {profile.badges.length < BADGE_LIST.length && (
+          <p className="text-[10px] text-slate-400 text-center mt-3 font-medium">
+            🎯 Keep practicing to unlock more stickers!
+          </p>
+        )}
+        {profile.badges.length === BADGE_LIST.length && (
+          <p className="text-[10px] text-emerald-600 text-center mt-3 font-bold">
+            🎉 All stickers unlocked — you&apos;re a Math Champion!
+          </p>
+        )}
       </div>
 
       {/* Dangerous Reset Action */}

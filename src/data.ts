@@ -146,12 +146,18 @@ export const INSTANT_TUTOR_QUESTIONS = [
 ];
 
 export const BADGE_LIST = [
-  { id: "ratio_ranger", name: "Ratio Ranger", desc: "Completed a Ratios assessment", icon: "🏹", color: "bg-amber-100 text-amber-700 border-amber-300" },
-  { id: "fraction_fanatic", name: "Fraction Fanatic", desc: "Scored 100% on The Number System", icon: "🍰", color: "bg-blue-100 text-blue-700 border-blue-300" },
-  { id: "equation_explorer", name: "Equation Explorer", desc: "Created or completed an Algebra practice", icon: "🔑", color: "bg-emerald-100 text-emerald-700 border-emerald-300" },
-  { id: "geometry_giant", name: "Geometry Giant", desc: "Analyzed area or volume with Tutor Mathy", icon: "📐", color: "bg-purple-100 text-purple-700 border-purple-300" },
-  { id: "data_detective", name: "Data Detective", desc: "Learned stats and histograms", icon: "🔍", color: "bg-rose-100 text-rose-700 border-rose-300" },
-  { id: "paper_scanner", name: "Paper Scanner Pro", desc: "Uploaded a worksheet image to check answers", icon: "📸", color: "bg-indigo-100 text-indigo-700 border-indigo-300" }
+  { id: "first_steps",       name: "First Steps",      desc: "Completed your very first practice quiz",           icon: "🌟", unlockHint: "Complete any quiz",             bg: "bg-yellow-50",   border: "border-yellow-300",  shadow: "shadow-yellow-100"  },
+  { id: "ratio_ranger",      name: "Ratio Ranger",     desc: "Completed a Ratios & Rates worksheet",              icon: "⚡", unlockHint: "Complete a Ratios quiz",        bg: "bg-orange-50",   border: "border-orange-300",  shadow: "shadow-orange-100"  },
+  { id: "fraction_fanatic",  name: "Fraction Fanatic", desc: "Scored 100% on The Number System",                 icon: "🍰", unlockHint: "Score 100% on Number System",   bg: "bg-blue-50",     border: "border-blue-300",    shadow: "shadow-blue-100"    },
+  { id: "equation_explorer", name: "Algebra Ace",      desc: "Completed an Equations & Expressions quiz",        icon: "🔮", unlockHint: "Complete an Expressions quiz",  bg: "bg-emerald-50",  border: "border-emerald-300", shadow: "shadow-emerald-100" },
+  { id: "geometry_giant",    name: "Geometry Giant",   desc: "Mastered shapes & space with Tutor Mathy",         icon: "📐", unlockHint: "Complete a Geometry quiz",      bg: "bg-purple-50",   border: "border-purple-300",  shadow: "shadow-purple-100"  },
+  { id: "data_detective",    name: "Data Detective",   desc: "Explored statistics & probability topics",          icon: "🕵️", unlockHint: "Complete a Statistics quiz",    bg: "bg-rose-50",     border: "border-rose-300",    shadow: "shadow-rose-100"    },
+  { id: "perfect_score",     name: "Perfect Score!",   desc: "Achieved 100% accuracy on a quiz",                 icon: "💯", unlockHint: "Score 100% on any quiz",        bg: "bg-amber-50",    border: "border-amber-300",   shadow: "shadow-amber-100"   },
+  { id: "honor_roll",        name: "Honor Roll",       desc: "Scored 80% or higher on a quiz",                   icon: "🏅", unlockHint: "Score 80%+ on any quiz",        bg: "bg-lime-50",     border: "border-lime-300",    shadow: "shadow-lime-100"    },
+  { id: "paper_scanner",     name: "Scanner Pro",      desc: "Uploaded your first homework scan photo",           icon: "📸", unlockHint: "Upload a homework photo",       bg: "bg-indigo-50",   border: "border-indigo-300",  shadow: "shadow-indigo-100"  },
+  { id: "scan_hero",         name: "Scan Hero",        desc: "Submitted 3 homework scans for grading",           icon: "🦸", unlockHint: "Upload 3 homework scans",       bg: "bg-cyan-50",     border: "border-cyan-300",    shadow: "shadow-cyan-100"    },
+  { id: "worksheet_master",  name: "Sheet Master",     desc: "Generated 3 or more practice worksheets",          icon: "✏️", unlockHint: "Generate 3 worksheets",         bg: "bg-teal-50",     border: "border-teal-300",    shadow: "shadow-teal-100"    },
+  { id: "math_champ",        name: "Math Champion",    desc: "Practiced worksheets in all main topic areas",      icon: "🏆", unlockHint: "Practice all 5 math topics",    bg: "bg-yellow-50",   border: "border-yellow-400",  shadow: "shadow-yellow-200"  },
 ];
 
 export const AVATAR_OPTIONS = [

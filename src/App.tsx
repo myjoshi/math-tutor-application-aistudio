@@ -402,6 +402,10 @@ export default function App() {
       if (!awardBadges.includes("paper_scanner")) {
         awardBadges.push("paper_scanner");
       }
+      // scan_hero: earned on 3rd scan (scans still holds pre-update value here)
+      if (scans.length + 1 >= 3 && !awardBadges.includes("scan_hero")) {
+        awardBadges.push("scan_hero");
+      }
 
       const updatedSkills = { ...profile.skills };
       
@@ -659,11 +663,47 @@ export default function App() {
     const pointsAwarded = Math.round(correct * 20 + (percent === 100 ? 50 : 10));
     const awardBadges: string[] = [...profile.badges];
 
+    // First quiz ever
+    if (quizResults.length === 0 && !awardBadges.includes("first_steps")) {
+      awardBadges.push("first_steps");
+    }
+
+    // Topic-specific badges
     if (currentQuiz.topicId === "number_system" && percent === 100 && !awardBadges.includes("fraction_fanatic")) {
       awardBadges.push("fraction_fanatic");
     }
-    if (currentQuiz.topicId === "ratios" && !awardBadges.includes("ratio_ranger")) {
+    if (currentQuiz.topicId === "ratios" && percent >= 50 && !awardBadges.includes("ratio_ranger")) {
       awardBadges.push("ratio_ranger");
+    }
+    if (currentQuiz.topicId === "expressions" && percent >= 50 && !awardBadges.includes("equation_explorer")) {
+      awardBadges.push("equation_explorer");
+    }
+    if ((currentQuiz.topicId === "geometry" || currentQuiz.topicId === "area_volume") && percent >= 50 && !awardBadges.includes("geometry_giant")) {
+      awardBadges.push("geometry_giant");
+    }
+    if (currentQuiz.topicId === "statistics" && percent >= 50 && !awardBadges.includes("data_detective")) {
+      awardBadges.push("data_detective");
+    }
+
+    // Score-based badges
+    if (percent === 100 && !awardBadges.includes("perfect_score")) {
+      awardBadges.push("perfect_score");
+    }
+    if (percent >= 80 && !awardBadges.includes("honor_roll")) {
+      awardBadges.push("honor_roll");
+    }
+
+    // Milestone: 3rd worksheet generated (quizResults holds pre-update count here)
+    if (quizResults.length + 1 >= 3 && !awardBadges.includes("worksheet_master")) {
+      awardBadges.push("worksheet_master");
+    }
+
+    // Milestone: all 5 main topics practiced
+    const coveredTopics = new Set(quizResults.map(r => r.topicId));
+    coveredTopics.add(currentQuiz.topicId);
+    const mainTopics = ["ratios", "number_system", "expressions", "geometry", "statistics"];
+    if (mainTopics.every(t => coveredTopics.has(t)) && !awardBadges.includes("math_champ")) {
+      awardBadges.push("math_champ");
     }
 
     const parentTopic = profile.skills[currentQuiz.topicId];
@@ -874,7 +914,7 @@ export default function App() {
           {/* Achievements stickers list */}
           <div>
             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2.5">
-              Stickers Archive
+              Stickers Archive ({profile.badges.length}/{BADGE_LIST.length})
             </span>
             <div className="grid grid-cols-4 gap-1.5">
               {BADGE_LIST.map((badge) => {
@@ -882,12 +922,19 @@ export default function App() {
                 return (
                   <div
                     key={badge.id}
-                    title={`${badge.name}: ${badge.desc}`}
-                    className={`aspect-square rounded-xl border flex items-center justify-center text-md relative ${
-                      unlocked ? "bg-white border-indigo-200 shadow-xs" : "bg-slate-50 opacity-30 select-none"
+                    title={unlocked ? `✅ ${badge.name}` : `🔒 ${badge.unlockHint}`}
+                    className={`aspect-square rounded-xl border flex items-center justify-center text-base relative transition-all duration-150 ${
+                      unlocked
+                        ? `${badge.bg} ${badge.border} shadow-sm`
+                        : "bg-slate-50 border-slate-200/40 opacity-30 grayscale"
                     }`}
                   >
                     {badge.icon}
+                    {unlocked && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border border-white flex items-center justify-center">
+                        <span className="text-[6px] text-white font-black">✓</span>
+                      </span>
+                    )}
                   </div>
                 );
               })}

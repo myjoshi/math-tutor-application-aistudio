@@ -59,12 +59,19 @@ export default function App() {
 
   const [isLoading, setIsLoading] = useState(true);
 
+  // Ensure any newly-added curriculum topics appear for returning users
+  // without overwriting their existing progress on known topics.
+  const mergeTopics = (p: StudentProfile): StudentProfile => ({
+    ...p,
+    skills: { ...INITIAL_TOPICS, ...(p.skills || {}) }
+  });
+
   // State initialization with localStorage persistence
   const [profile, setProfile] = useState<StudentProfile>(() => {
     const saved = localStorage.getItem("math_tutor_profile");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        return mergeTopics(JSON.parse(saved));
       } catch (e) {
         return DEFAULT_PROFILE;
       }
@@ -91,7 +98,7 @@ export default function App() {
         const remoteQuizzes = await loadQuizResults();
 
         if (remoteProfile) {
-          setProfile(remoteProfile);
+          setProfile(mergeTopics(remoteProfile));
         } else {
           await saveStudentProfile(profile);
         }
@@ -570,13 +577,45 @@ export default function App() {
 
     let correct = 0;
     currentQuiz.questions.forEach((q) => {
-      const answerVal = (userQuizAnswers[q.id] || "").trim().toLowerCase();
-      const correctAnswerVal = q.correctAnswer.trim().toLowerCase();
+      const answerVal = (userQuizAnswers[q.id] || "").trim();
+      const correctAnswerVal = q.correctAnswer.trim();
 
-      if (answerVal === correctAnswerVal) {
+      // Try exact match first (case-insensitive)
+      if (answerVal.toLowerCase() === correctAnswerVal.toLowerCase()) {
         correct++;
-      } else if (q.type === "short-answer" && parseFloat(answerVal) === parseFloat(correctAnswerVal)) {
-        correct++;
+        return;
+      }
+
+      // For short-answer, try numeric comparison with tolerance
+      if (q.type === "short-answer") {
+        const studentNum = parseFloat(answerVal);
+        const correctNum = parseFloat(correctAnswerVal);
+
+        if (!isNaN(studentNum) && !isNaN(correctNum)) {
+          // Allow small epsilon for floating point variations
+          if (Math.abs(studentNum - correctNum) < 0.01) {
+            correct++;
+            return;
+          }
+        }
+
+        // Try stripping common units: "15 mph" -> 15, should match "15"
+        const studentNumericStr = answerVal.replace(/\s*(mph|km\/h|ft|feet|m|cm|mm|km|miles|seconds|hours|minutes|degrees|°|sq|square|cubic|cu)\s*$/i, "").trim();
+        const correctNumericStr = correctAnswerVal.replace(/\s*(mph|km\/h|ft|feet|m|cm|mm|km|miles|seconds|hours|minutes|degrees|°|sq|square|cubic|cu)\s*$/i, "").trim();
+
+        if (studentNumericStr.toLowerCase() === correctNumericStr.toLowerCase()) {
+          correct++;
+          return;
+        }
+
+        // Try numeric comparison after unit stripping
+        const studentNumAfterStrip = parseFloat(studentNumericStr);
+        const correctNumAfterStrip = parseFloat(correctNumericStr);
+        if (!isNaN(studentNumAfterStrip) && !isNaN(correctNumAfterStrip)) {
+          if (Math.abs(studentNumAfterStrip - correctNumAfterStrip) < 0.01) {
+            correct++;
+          }
+        }
       }
     });
 

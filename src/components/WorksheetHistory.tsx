@@ -82,10 +82,22 @@ export default function WorksheetHistory({ quizResults, onReviewWorksheet }: Wor
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                       {result.questions.map((q: Question, idx: number) => {
                         const userAnswer = result.userAnswers[q.id] || "";
-                        const isCorrect = 
-                          userAnswer.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase() ||
-                          (q.type === "short-answer" && parseFloat(userAnswer) === parseFloat(q.correctAnswer));
-                        
+                        const studentNum = parseFloat(userAnswer);
+                        const correctNum = parseFloat(q.correctAnswer);
+
+                        // Lenient comparison: exact match or numeric equivalence
+                        let isCorrect = false;
+                        if (userAnswer.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()) {
+                          isCorrect = true;
+                        } else if (
+                          q.type === "short-answer" &&
+                          !isNaN(studentNum) &&
+                          !isNaN(correctNum) &&
+                          Math.abs(studentNum - correctNum) < 0.01
+                        ) {
+                          isCorrect = true;
+                        }
+
                         return (
                           <div key={q.id} className="bg-white border border-slate-200 rounded-xl p-3">
                             <div className="flex items-start gap-2 mb-2">

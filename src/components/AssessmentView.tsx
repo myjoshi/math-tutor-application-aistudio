@@ -156,9 +156,21 @@ export default function AssessmentView({
             <div className="space-y-5">
               {viewingWorksheet.questions.map((q: Question, idx: number) => {
                 const userAnswer = viewingWorksheet.userAnswers[q.id] || "";
-                const isCorrect = 
-                  userAnswer.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase() ||
-                  (q.type === "short-answer" && parseFloat(userAnswer) === parseFloat(q.correctAnswer));
+                const studentNum = parseFloat(userAnswer);
+                const correctNum = parseFloat(q.correctAnswer);
+
+                // Determine if answer is correct using lenient comparison
+                let isCorrect = false;
+                if (userAnswer.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()) {
+                  isCorrect = true;
+                } else if (
+                  q.type === "short-answer" &&
+                  !isNaN(studentNum) &&
+                  !isNaN(correctNum) &&
+                  Math.abs(studentNum - correctNum) < 0.01
+                ) {
+                  isCorrect = true;
+                }
 
                 return (
                   <div key={q.id} className={`p-4 rounded-xl border ${

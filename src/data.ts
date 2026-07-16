@@ -41,6 +41,36 @@ export const INITIAL_TOPICS = {
     strengths: [],
     weaknesses: []
   },
+  exponents: {
+    topicId: "exponents",
+    name: "Exponents & Powers",
+    scoreCount: 0,
+    averageScore: 0,
+    masteryLevel: 0,
+    lastTested: null,
+    strengths: [],
+    weaknesses: []
+  },
+  percents: {
+    topicId: "percents",
+    name: "Percents & Proportions",
+    scoreCount: 0,
+    averageScore: 0,
+    masteryLevel: 0,
+    lastTested: null,
+    strengths: [],
+    weaknesses: []
+  },
+  area_volume: {
+    topicId: "area_volume",
+    name: "Area & Volume",
+    scoreCount: 0,
+    averageScore: 0,
+    masteryLevel: 0,
+    lastTested: null,
+    strengths: [],
+    weaknesses: []
+  },
   statistics: {
     topicId: "statistics",
     name: "Statistics & Plots",

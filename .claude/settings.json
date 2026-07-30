@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.k5learning.com)",
+      "WebSearch"
+    ]
+  }
+}

@@ -3,7 +3,7 @@ import { StudentProfile } from "./types";
 export const INITIAL_TOPICS = {
   ratios: {
     topicId: "ratios",
-    name: "Ratios & Rates",
+    name: "Ratios & Proportions",
     scoreCount: 0,
     averageScore: 0,
     masteryLevel: 0,
@@ -21,9 +21,9 @@ export const INITIAL_TOPICS = {
     strengths: [],
     weaknesses: []
   },
-  expressions: {
-    topicId: "expressions",
-    name: "Equations & Expressions",
+  factoring: {
+    topicId: "factoring",
+    name: "Factors & Multiples",
     scoreCount: 0,
     averageScore: 0,
     masteryLevel: 0,
@@ -33,7 +33,7 @@ export const INITIAL_TOPICS = {
   },
   geometry: {
     topicId: "geometry",
-    name: "Geometry & Space",
+    name: "Geometry & Measurement",
     scoreCount: 0,
     averageScore: 0,
     masteryLevel: 0,
@@ -53,27 +53,7 @@ export const INITIAL_TOPICS = {
   },
   percents: {
     topicId: "percents",
-    name: "Percents & Proportions",
-    scoreCount: 0,
-    averageScore: 0,
-    masteryLevel: 0,
-    lastTested: null,
-    strengths: [],
-    weaknesses: []
-  },
-  area_volume: {
-    topicId: "area_volume",
-    name: "Area & Volume",
-    scoreCount: 0,
-    averageScore: 0,
-    masteryLevel: 0,
-    lastTested: null,
-    strengths: [],
-    weaknesses: []
-  },
-  statistics: {
-    topicId: "statistics",
-    name: "Statistics & Plots",
+    name: "Percents",
     scoreCount: 0,
     averageScore: 0,
     masteryLevel: 0,
@@ -86,7 +66,7 @@ export const INITIAL_TOPICS = {
 export const INSTANT_TUTOR_QUESTIONS = [
   {
     topicId: "ratios",
-    topicName: "Ratios & Rates",
+    topicName: "Ratios & Proportions",
     title: "Ratio and Rates Challenge",
     skillsTested: ["Equivalent Ratios", "Unit Rates", "Percents"],
     questions: [
@@ -147,17 +127,17 @@ export const INSTANT_TUTOR_QUESTIONS = [
 
 export const BADGE_LIST = [
   { id: "first_steps",       name: "First Steps",      desc: "Completed your very first practice quiz",           icon: "🌟", unlockHint: "Complete any quiz",             bg: "bg-yellow-50",   border: "border-yellow-300",  shadow: "shadow-yellow-100"  },
-  { id: "ratio_ranger",      name: "Ratio Ranger",     desc: "Completed a Ratios & Rates worksheet",              icon: "⚡", unlockHint: "Complete a Ratios quiz",        bg: "bg-orange-50",   border: "border-orange-300",  shadow: "shadow-orange-100"  },
+  { id: "ratio_ranger",      name: "Ratio Ranger",     desc: "Completed a Ratios & Proportions worksheet",        icon: "⚡", unlockHint: "Complete a Ratios quiz",        bg: "bg-orange-50",   border: "border-orange-300",  shadow: "shadow-orange-100"  },
   { id: "fraction_fanatic",  name: "Fraction Fanatic", desc: "Scored 100% on The Number System",                 icon: "🍰", unlockHint: "Score 100% on Number System",   bg: "bg-blue-50",     border: "border-blue-300",    shadow: "shadow-blue-100"    },
-  { id: "equation_explorer", name: "Algebra Ace",      desc: "Completed an Equations & Expressions quiz",        icon: "🔮", unlockHint: "Complete an Expressions quiz",  bg: "bg-emerald-50",  border: "border-emerald-300", shadow: "shadow-emerald-100" },
-  { id: "geometry_giant",    name: "Geometry Giant",   desc: "Mastered shapes & space with Tutor Mathy",         icon: "📐", unlockHint: "Complete a Geometry quiz",      bg: "bg-purple-50",   border: "border-purple-300",  shadow: "shadow-purple-100"  },
-  { id: "data_detective",    name: "Data Detective",   desc: "Explored statistics & probability topics",          icon: "🕵️", unlockHint: "Complete a Statistics quiz",    bg: "bg-rose-50",     border: "border-rose-300",    shadow: "shadow-rose-100"    },
+  { id: "equation_explorer", name: "Factor Finder",    desc: "Completed a Factors & Multiples worksheet",         icon: "🧩", unlockHint: "Complete a Factoring quiz",     bg: "bg-emerald-50",  border: "border-emerald-300", shadow: "shadow-emerald-100" },
+  { id: "geometry_giant",    name: "Geometry Giant",   desc: "Mastered shapes, space & measurement with Tutor Mathy", icon: "📐", unlockHint: "Complete a Geometry quiz",  bg: "bg-purple-50",   border: "border-purple-300",  shadow: "shadow-purple-100"  },
+  { id: "data_detective",    name: "Power Player",     desc: "Completed an Exponents & Powers worksheet",         icon: "🔋", unlockHint: "Complete an Exponents quiz",    bg: "bg-rose-50",     border: "border-rose-300",    shadow: "shadow-rose-100"    },
   { id: "perfect_score",     name: "Perfect Score!",   desc: "Achieved 100% accuracy on a quiz",                 icon: "💯", unlockHint: "Score 100% on any quiz",        bg: "bg-amber-50",    border: "border-amber-300",   shadow: "shadow-amber-100"   },
   { id: "honor_roll",        name: "Honor Roll",       desc: "Scored 80% or higher on a quiz",                   icon: "🏅", unlockHint: "Score 80%+ on any quiz",        bg: "bg-lime-50",     border: "border-lime-300",    shadow: "shadow-lime-100"    },
   { id: "paper_scanner",     name: "Scanner Pro",      desc: "Uploaded your first homework scan photo",           icon: "📸", unlockHint: "Upload a homework photo",       bg: "bg-indigo-50",   border: "border-indigo-300",  shadow: "shadow-indigo-100"  },
   { id: "scan_hero",         name: "Scan Hero",        desc: "Submitted 3 homework scans for grading",           icon: "🦸", unlockHint: "Upload 3 homework scans",       bg: "bg-cyan-50",     border: "border-cyan-300",    shadow: "shadow-cyan-100"    },
   { id: "worksheet_master",  name: "Sheet Master",     desc: "Generated 3 or more practice worksheets",          icon: "✏️", unlockHint: "Generate 3 worksheets",         bg: "bg-teal-50",     border: "border-teal-300",    shadow: "shadow-teal-100"    },
-  { id: "math_champ",        name: "Math Champion",    desc: "Practiced worksheets in all main topic areas",      icon: "🏆", unlockHint: "Practice all 5 math topics",    bg: "bg-yellow-50",   border: "border-yellow-400",  shadow: "shadow-yellow-200"  },
+  { id: "math_champ",        name: "Math Champion",    desc: "Practiced worksheets in all main topic areas",      icon: "🏆", unlockHint: "Practice all 6 math topics",    bg: "bg-yellow-50",   border: "border-yellow-400",  shadow: "shadow-yellow-200"  },
 ];
 
 export const AVATAR_OPTIONS = [

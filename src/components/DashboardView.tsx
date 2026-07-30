@@ -97,7 +97,7 @@ export default function DashboardView({
                 📝
               </div>
               <div className="truncate">
-                <h4 className="text-xs font-bold text-slate-700 leading-tight truncate">Ratios & Unit Rates Basics</h4>
+                <h4 className="text-xs font-bold text-slate-700 leading-tight truncate">Ratios & Proportions Basics</h4>
                 <p className="text-[10px] text-slate-400 leading-none mt-0.5 font-medium">CCSS.Math.6.RP.A</p>
               </div>
             </div>

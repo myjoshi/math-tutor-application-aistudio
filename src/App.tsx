@@ -413,14 +413,16 @@ export default function App() {
         let matchedTopicId = "number_system";
         const skillLower = (prob.recommendedSkill || "").toLowerCase();
         
-        if (skillLower.includes("ratio") || skillLower.includes("rate") || skillLower.includes("percent")) {
+        if (skillLower.includes("ratio") || skillLower.includes("rate") || skillLower.includes("proportion")) {
           matchedTopicId = "ratios";
-        } else if (skillLower.includes("equation") || skillLower.includes("expression") || skillLower.includes("solve")) {
-          matchedTopicId = "expressions";
-        } else if (skillLower.includes("volume") || skillLower.includes("area") || skillLower.includes("geometry")) {
+        } else if (skillLower.includes("percent")) {
+          matchedTopicId = "percents";
+        } else if (skillLower.includes("factor") || skillLower.includes("multiple") || skillLower.includes("prime") || skillLower.includes("gcf") || skillLower.includes("lcm")) {
+          matchedTopicId = "factoring";
+        } else if (skillLower.includes("volume") || skillLower.includes("area") || skillLower.includes("geometry") || skillLower.includes("measure") || skillLower.includes("convert")) {
           matchedTopicId = "geometry";
-        } else if (skillLower.includes("mean") || skillLower.includes("plot") || skillLower.includes("statistic")) {
-          matchedTopicId = "statistics";
+        } else if (skillLower.includes("exponent") || skillLower.includes("power")) {
+          matchedTopicId = "exponents";
         }
 
         const skill = updatedSkills[matchedTopicId];
@@ -675,13 +677,13 @@ export default function App() {
     if (currentQuiz.topicId === "ratios" && percent >= 50 && !awardBadges.includes("ratio_ranger")) {
       awardBadges.push("ratio_ranger");
     }
-    if (currentQuiz.topicId === "expressions" && percent >= 50 && !awardBadges.includes("equation_explorer")) {
+    if (currentQuiz.topicId === "factoring" && percent >= 50 && !awardBadges.includes("equation_explorer")) {
       awardBadges.push("equation_explorer");
     }
-    if ((currentQuiz.topicId === "geometry" || currentQuiz.topicId === "area_volume") && percent >= 50 && !awardBadges.includes("geometry_giant")) {
+    if (currentQuiz.topicId === "geometry" && percent >= 50 && !awardBadges.includes("geometry_giant")) {
       awardBadges.push("geometry_giant");
     }
-    if (currentQuiz.topicId === "statistics" && percent >= 50 && !awardBadges.includes("data_detective")) {
+    if (currentQuiz.topicId === "exponents" && percent >= 50 && !awardBadges.includes("data_detective")) {
       awardBadges.push("data_detective");
     }
 
@@ -698,10 +700,10 @@ export default function App() {
       awardBadges.push("worksheet_master");
     }
 
-    // Milestone: all 5 main topics practiced
+    // Milestone: all 6 main topics practiced
     const coveredTopics = new Set(quizResults.map(r => r.topicId));
     coveredTopics.add(currentQuiz.topicId);
-    const mainTopics = ["ratios", "number_system", "expressions", "geometry", "statistics"];
+    const mainTopics = ["ratios", "number_system", "factoring", "geometry", "percents", "exponents"];
     if (mainTopics.every(t => coveredTopics.has(t)) && !awardBadges.includes("math_champ")) {
       awardBadges.push("math_champ");
     }

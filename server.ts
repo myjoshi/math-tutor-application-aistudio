@@ -61,6 +61,20 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// Grade-6 scope guardrails per topic, calibrated against K5 Learning's sixth-grade worksheet
+// categories so the AI can't drift into 7th-grade+ content (algebraic equations, irrational
+// numbers, statistics/box-plots, etc.) that K5's actual grade-6 curriculum never covers.
+const TOPIC_SCOPE: Record<string, string> = {
+  number_system: "Grade-6 number sense: adding/subtracting/multiplying/dividing fractions and mixed numbers (including dividing by a fraction), simplifying fractions, converting between fractions and decimals, all four operations with multi-digit decimals, place value and scientific notation of whole numbers, and operations with positive/negative integers (absolute value, ordering on a number line, and signed addition/subtraction/multiplication/division). Do NOT include algebraic variables, solving equations, square/cube roots of non-perfect squares, or any content beyond 6th-grade CCSS.",
+  ratios: "Grade-6 ratio and proportion reasoning: writing and simplifying ratios, equivalent ratios, unit rates, solving proportions (including versions with one decimal place, e.g. 38/2 = 14/x, and versions with decimals throughout, e.g. 17.3/x = 11/15.7), and multi-step ratio/proportion word problems. Do NOT include percent calculations (that is a separate topic) or algebraic equation-solving beyond isolating one proportional unknown.",
+  percents: "Grade-6 percent skills: converting between fractions, decimals and percents (including values over 100%, e.g. 154% = 1.54), finding a percent of a number (including percents over 100% and percents of decimal numbers, e.g. 60% of 9.59), finding what percent one number is of another, and solving for a missing base number given a percent (e.g. '70% of ___ = 56'). Keep values realistic for a 6th grader — no compound interest or multi-step percent-change chains.",
+  exponents: "Grade-6 exponent skills: evaluating whole-number bases raised to small exponents, evaluating fraction/decimal bases raised to exponents (e.g. (0.2)^3), negative and zero exponents (e.g. 3^-1, (0.8)^-2), writing repeated multiplication using exponential notation, and evaluating numeric expressions that combine exponents with other operations (e.g. 2^4 - 3^3, 0.8^2 x 0.5^2). Do NOT include variables or algebraic exponent rules (e.g. x^2 * x^3) — keep every base and exponent purely numeric.",
+  factoring: "Grade-6 factoring and number theory: prime factorization of numbers, finding the greatest common factor (GCF) of two or three numbers, and finding the least common multiple (LCM) of two or three numbers. Numbers can run into the hundreds for an extra challenge, but keep everything grounded in whole-number factoring — no algebraic factoring of expressions.",
+  geometry: "Grade-6 geometry and measurement: classifying and measuring angles, classifying triangles (equilateral/isosceles/scalene) and quadrilaterals, area and perimeter of irregular rectangular shapes/right triangles/other polygons, circumference and area of circles, volume and surface area of rectangular prisms (including with fractional or decimal side lengths), and converting between units of length/weight/capacity in both customary (inches/feet/yards, ounces/pounds/tons, cups/pints/quarts/gallons) and metric (mm/cm/m/km, ml/l, g/kg) systems, including decimal conversions."
+};
+
+const DIFFICULTY_ESCALATION = `Calibrate baseline difficulty against the "harder" variant of each skill on standard printable 6th-grade worksheets (e.g. decimal-based proportions rather than whole-number ones, negative-exponent problems rather than only positive whole-number bases, multi-step area/volume problems with fractional dimensions, 3-number GCF/LCM rather than 2-number), then push about 10-15% further in challenge than that — one extra step, larger or more irregular numbers, or an added real-world twist — while staying strictly inside 6th-grade CCSS scope. Never introduce content that would first appear in a 7th-grade or higher curriculum: no linear equations with variables, no irrational numbers, no algebraic expression simplification, no statistics topics like mean/median/box-plots/histograms.`;
+
 // 2. Generate custom 6th grade math assessment
 app.post("/api/generate-test", async (req, res) => {
   try {
@@ -131,8 +145,11 @@ app.post("/api/generate-test", async (req, res) => {
 
     const promptText = `Generate a standard 6th-grade math assessment with exactly ${numQuestions} unique, clear questions testing the topic: '${topicName}' (Topic ID: ${topicId}).
 ${topicId === "mixed"
-  ? "Since this is a mixed assessment, distribute the questions across all major 6th-grade CCSS standards: ratios and rates, the number system (decimals, fractions, division), equations and expressions, basic geometry, and statistics/plots."
-  : "Make sure to test actual core 6th-grade standards for this specific topic, such as ratios, fractions, volume, multi-digit decimal division, negative numbers, or simple equations depending on the topic."}
+  ? `Since this is a mixed assessment, distribute the questions across all six main 6th-grade topic areas, respecting each one's scope below:\n${Object.entries(TOPIC_SCOPE).map(([id, scope]) => `- ${id}: ${scope}`).join("\n")}`
+  : `TOPIC SCOPE (strictly stay within this — it defines exactly what belongs in 6th-grade "${topicName}" and what does not):\n${TOPIC_SCOPE[topicId] || "Test only core 6th-grade CCSS standards appropriate to this specific topic name."}`}
+
+DIFFICULTY CALIBRATION:
+${DIFFICULTY_ESCALATION}
 
 Include approximately 50% multiple-choice and 50% short-answer questions.
 Conform strictly to the response schema. Keep mathematical notations simple and understandable. Each question id must be like q1, q2, ... q${numQuestions}.

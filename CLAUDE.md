@@ -41,11 +41,14 @@ src/                        # React frontend
   data.ts                   # Curriculum constants (topics, badges, avatars)
   components/               # Feature views (Assessment, Scanner, Dashboard, Profile, History)
   lib/firebase.ts           # Firestore CRUD helpers
+  lib/localDb.ts            # IndexedDB offline cache (localStorage fallback)
   utils/answerValidation.ts # AI answer extraction + auto-correction
 server.ts                   # Express backend (API endpoints, Gemini integration)
 ```
 
-**State flow**: React state → localStorage (offline cache) + Firestore (cloud sync)
+**State flow**: React state → IndexedDB (offline cache) + Firestore (cloud sync)
+
+**Local cache** (`src/lib/localDb.ts`): profile/scans/quizzes live in an IndexedDB key-value store, not localStorage — scans embed base64 images, which exceeded the ~5MB localStorage quota. Hydration is async: `App.tsx` reads the cache on mount, flips `isHydrated`, then reconciles with Firestore. Old `math_tutor_*` localStorage keys are migrated on first load; private/blocked-storage browsers fall back to localStorage.
 
 **API endpoints** (all on port 3000):
 - `GET  /api/health`

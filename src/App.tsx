@@ -45,6 +45,13 @@ import {
   loadScanResults,
   clearAllFirebaseData
 } from "./lib/firebase";
+import {
+  loadLocalState,
+  saveLocalProfile,
+  saveLocalScans,
+  saveLocalQuizResults,
+  clearLocalState
+} from "./lib/localDb";
 
 export default function App() {
   const getNormalizedScanTotals = (scan: ScannedPaperResult) => {
@@ -66,32 +73,40 @@ export default function App() {
     skills: { ...INITIAL_TOPICS, ...(p.skills || {}) }
   });
 
-  // State initialization with localStorage persistence
-  const [profile, setProfile] = useState<StudentProfile>(() => {
-    const saved = localStorage.getItem("math_tutor_profile");
-    if (saved) {
-      try {
-        return mergeTopics(JSON.parse(saved));
-      } catch (e) {
-        return DEFAULT_PROFILE;
-      }
-    }
-    return DEFAULT_PROFILE;
-  });
+  // State starts empty and is hydrated from IndexedDB (see lib/localDb.ts),
+  // which is async, so the cache can no longer be read during initialization.
+  const [profile, setProfile] = useState<StudentProfile>(DEFAULT_PROFILE);
+  const [scans, setScans] = useState<ScannedPaperResult[]>([]);
+  const [quizResults, setQuizResults] = useState<AssessmentResult[]>([]);
 
-  const [scans, setScans] = useState<ScannedPaperResult[]>(() => {
-    const saved = localStorage.getItem("math_tutor_scans");
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Guards the save effects below so they can't overwrite the offline cache
+  // with the empty defaults before the cache has been read.
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  const [quizResults, setQuizResults] = useState<AssessmentResult[]>(() => {
-    const saved = localStorage.getItem("math_tutor_quizzes");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // Sync state with Firebase on mount
+  // Hydrate from the local cache, then reconcile with Firebase, on mount
   useEffect(() => {
     async function initData() {
+      let localProfile: StudentProfile | null = null;
+      let localScans: ScannedPaperResult[] = [];
+      let localQuizzes: AssessmentResult[] = [];
+
+      // 1. Local cache first, so the app is usable immediately and offline.
+      try {
+        const local = await loadLocalState();
+        localProfile = local.profile ? mergeTopics(local.profile) : null;
+        localScans = local.scans;
+        localQuizzes = local.quizResults;
+
+        if (localProfile) setProfile(localProfile);
+        if (localScans.length > 0) setScans(localScans);
+        if (localQuizzes.length > 0) setQuizResults(localQuizzes);
+      } catch (e) {
+        console.error("Failed to load local cache: ", e);
+      } finally {
+        setIsHydrated(true);
+      }
+
+      // 2. Cloud wins where it has data; otherwise seed it from the local copy.
       try {
         const remoteProfile = await loadStudentProfile();
         const remoteScans = await loadScanResults();
@@ -100,21 +115,21 @@ export default function App() {
         if (remoteProfile) {
           setProfile(mergeTopics(remoteProfile));
         } else {
-          await saveStudentProfile(profile);
+          await saveStudentProfile(localProfile ?? DEFAULT_PROFILE);
         }
 
         if (remoteScans && remoteScans.length > 0) {
           setScans(remoteScans);
-        } else if (scans.length > 0) {
-          for (const scan of scans) {
+        } else if (localScans.length > 0) {
+          for (const scan of localScans) {
             await saveScanResult(scan);
           }
         }
 
         if (remoteQuizzes && remoteQuizzes.length > 0) {
           setQuizResults(remoteQuizzes);
-        } else if (quizResults.length > 0) {
-          for (const quiz of quizResults) {
+        } else if (localQuizzes.length > 0) {
+          for (const quiz of localQuizzes) {
             await saveQuizResult(quiz);
           }
         }
@@ -127,21 +142,24 @@ export default function App() {
     initData();
   }, []);
 
-  // Save states to localstorage and Firebase whenever they change
+  // Save states to IndexedDB and Firebase whenever they change
   useEffect(() => {
-    localStorage.setItem("math_tutor_profile", JSON.stringify(profile));
+    if (!isHydrated) return;
+    saveLocalProfile(profile);
     if (!isLoading) {
       saveStudentProfile(profile);
     }
-  }, [profile, isLoading]);
+  }, [profile, isHydrated, isLoading]);
 
   useEffect(() => {
-    localStorage.setItem("math_tutor_scans", JSON.stringify(scans));
-  }, [scans]);
+    if (!isHydrated) return;
+    saveLocalScans(scans);
+  }, [scans, isHydrated]);
 
   useEffect(() => {
-    localStorage.setItem("math_tutor_quizzes", JSON.stringify(quizResults));
-  }, [quizResults]);
+    if (!isHydrated) return;
+    saveLocalQuizResults(quizResults);
+  }, [quizResults, isHydrated]);
 
   /* ==========================================
      PROFILES & TOPIC HELPERS
@@ -151,7 +169,7 @@ export default function App() {
       setIsLoading(true);
       try {
         await clearAllFirebaseData();
-        localStorage.clear();
+        await clearLocalState();
         setProfile(DEFAULT_PROFILE);
         setScans([]);
         setQuizResults([]);
